@@ -182,8 +182,8 @@ if image_input:
 
 Leveraging viColQwen's unified embeddings fundamentally enhances multimodal tasks:
 
-*   **Superior Multimodal RAG:** Retrieve image(s) *and/or* text using a single query vector, providing richer, coherent context to LLMs than disjoint systems.
-*   **Simplified Graph RAG:** Build knowledge graphs with nodes representing images, text, or multimodal documents, queryable via unified embeddings for complex relationship discovery.
+*   **Superior Multimodal RAG:** Retrieve image(s) *and/or* text or even multi-turn instruction, using a single query vector, providing richer, coherent context to LLMs than disjoint systems.
+*   **Simplified Graph RAG:** Build knowledge graphs with nodes representing images, text, multi-turn instruction, or multimodal documents, queryable via unified embeddings for complex relationship discovery.
 *   **Effective Cross-Modal Search:** Robustly find images from text queries, text from image queries, or similar image-text pairs using standard vector search.
 *   **Advanced Document Analysis:** Understand complex documents by capturing layout, images, and OCR'd text within one representation for clustering, classification, or search.
 *   **Contextual Visual Search:** Find visually similar images, refined by accompanying textual context embedded simultaneously.
