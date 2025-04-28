@@ -21,9 +21,9 @@ viColQwen's robustness stems from its sophisticated training strategy:
 
 1.  **Heterogeneous Data Integration:** The model is trained on a carefully curated mixture of four distinct data types, forcing it to learn diverse aspects of vision-language correlation:
     *   **Text-Text Semantic Similarity:** Pairs of texts with continuous similarity scores (0.0 to 1.0), teaching nuanced semantic understanding. (5.6M samples)
-    *   **Instruction Following:** Typical Large Language Model (LLM) instructions (single and multi-turn), enhancing contextual understanding and responsiveness.
-    *   **Multi-Image OCR:** Single-turn Optical Character Recognition tasks involving 1 to 5 images, grounding textual understanding in visual text.
-    *   **Multi-Image VQA:** Single and multi-turn Visual Question Answering tasks with 1 to 5 images, fostering deep visual reasoning capabilities.
+    *   **Instruction Following:** Typical Large Language Model (LLM) instructions (single and multi-turn), enhancing contextual understanding and responsiveness. (0.6M samples)
+    *   **Multi-Image OCR:** Single-turn Optical Character Recognition tasks involving 1 to 5 images, grounding textual understanding in visual text. (2.5M sampples)
+    *   **Multi-Image VQA:** Single and multi-turn Visual Question Answering tasks with 1 to 5 images, fostering deep visual reasoning capabilities. (2.5M samples)
 2.  **Mixed Loss Optimization:** Different data types are processed distinctly within the training loop, utilizing a combination of losses tailored to the specific task (e.g., similarity regression, instruction prediction, VQA accuracy) alongside the core contrastive objective.
 3.  **Contrastive Objective:** Employs InfoNCE loss (or potentially Adaptive NCE) to effectively learn discriminative representations across modalities.
 4.  **Scale:** Trained on a massive dataset of **11 million samples**, ensuring generalization and robustness.
