@@ -1,7 +1,3 @@
-Okay, incorporating your latest updates and the emphasis on the advantages over traditional separate-modality RAG, here is the refined, professional, and tech-focused model card draft:
-
----
-
 # viColQwen: High-Performance Unified Embeddings for Advanced Multimodal Understanding
 
 **[Model Release Pending - Stay Tuned!]**
@@ -215,5 +211,3 @@ Leveraging viColQwen's unified embeddings fundamentally enhances multimodal task
   howpublished = {\url{https://github.com/EraX-AI/viColQwen}} % Replace with actual final URL
 }
 ```
-
----
