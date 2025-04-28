@@ -100,6 +100,13 @@ print("Similarity Scores:\n", similarity_scores)
 text_input = "Dựa vào hình ảnh này, hãy tóm tắt các điểm chính."
 image_input = Image.open("path/to/relevant/image.jpg").convert("RGB")
 
+# Initialize the evaluator
+evaluator = ColPaLiEvaluator(
+    checkpoint_path="./qwen2vl2b_colpali_checkpoints/final/",
+    embed_dim=1024,
+    device="cuda"
+)
+
 def process_multimodal_input(evaluator_instance, text, image, image_base_path=""):
     """Process a combined text+image input for embedding (Illustrative)"""
     if isinstance(image, str):
@@ -132,7 +139,7 @@ def process_multimodal_input(evaluator_instance, text, image, image_base_path=""
 
     return inputs
 
-def get_multimodal_embedding(evaluator_instance, text, image, image_base_path=""):
+def get_multimodal_embedding(evaluator, text, image, image_base_path=""):
     """Get embedding for a text+image combination (Illustrative)"""
     inputs = process_multimodal_input(evaluator_instance, text, image, image_base_path)
     # Move inputs to the correct device
@@ -140,11 +147,8 @@ def get_multimodal_embedding(evaluator_instance, text, image, image_base_path=""
               for k, v in inputs.items()}
 
     with torch.no_grad():
-        # The model forward pass returns the embedding
-        # The exact output key ('embedding', 'pooler_output', etc.) depends on the model implementation
-        outputs = evaluator_instance.model(**inputs)
-        # Assuming the model directly outputs the embedding or it's under a specific key
-        embedding = outputs # Or outputs.embedding, outputs.pooler_output, etc.
+        outputs = evaluator.get_image_embeddings(**inputs)
+        embedding = outputs
 
     return embedding.cpu() # Return embedding on CPU by default
 
