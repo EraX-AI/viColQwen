@@ -1,0 +1,57 @@
+# ============================================================
+# Accelerate FSDP Configuration for Qwen2.5-VL-2B Fine-tuning
+# ============================================================
+
+# --- Distributed Setup ---
+compute_environment: LOCAL_MACHINE # Or CLOUD if applicable
+distributed_type: FSDP             # Use Fully Sharded Data Parallel
+num_machines: 1                    # Number of nodes
+num_processes: 8                   # Total number of GPUs across all nodes (e.g., 8 GPUs on 1 node)
+machine_rank: 0                    # Rank of the current machine (0 for single-node)
+main_process_ip: null              # Let accelerate detect IP automatically
+main_process_port: null            # Let accelerate pick a port automatically
+rdzv_backend: static               # Rendezvous backend (static is simple for single node)
+same_network: true                 # Assume GPUs are on the same network
+
+# --- Main Training Function ---
+main_training_function: main       # The name of the function in your script to execute
+
+# --- Mixed Precision ---
+mixed_precision: bf16              # Use bfloat16 for training
+
+# --- FSDP Specific Configuration ---
+fsdp_config:
+  # Sharding Strategy: Corresponds to ZeRO stage. FULL_SHARD is ZeRO-3.
+  # Options: FULL_SHARD, SHARD_GRAD_OP, NO_SHARD, HYBRID_SHARD
+  fsdp_sharding_strategy: FULL_SHARD
+
+  # Wrapping Policy: How to group layers for sharding. TRANSFORMER_BASED_WRAP is recommended for performance.
+  # Options: TRANSFORMER_BASED_WRAP, SIZE_BASED_WRAP, NO_WRAP
+  fsdp_auto_wrap_policy: TRANSFORMER_BASED_WRAP
+
+  # Specify the transformer block class name(s) for TRANSFORMER_BASED_WRAP.
+  # This MUST match the class name in your model implementation.
+  fsdp_transformer_layer_cls_to_wrap:
+    - Qwen2VLDecoderLayer # Verified class name for Qwen2.5-VL-2B
+
+  # Parameter for SIZE_BASED_WRAP (Commented out as we use TRANSFORMER_BASED_WRAP)
+  # fsdp_min_num_params: 1000000
+
+  # Prefetching: Overlap communication and computation.
+  fsdp_forward_prefetch: true           # Prefetch next forward parameters during current forward
+  fsdp_backward_prefetch_policy: BACKWARD_PRE # Prefetch next backward parameters during current backward (Options: BACKWARD_PRE, BACKWARD_POST, None)
+
+  # State Synchronization: Ensure model consistency at the start.
+  fsdp_sync_module_states: true
+
+  # Memory Optimization: Avoid keeping a full copy of parameters on each rank.
+  fsdp_use_orig_params: false
+
+  # Checkpoint Saving: How to save the model state dict. FULL_STATE_DICT is recommended for portability.
+  # Options: FULL_STATE_DICT, LOCAL_STATE_DICT, SHARDED_STATE_DICT
+  fsdp_state_dict_type: FULL_STATE_DICT
+
+# --- Deepspeed Config (Not used when distributed_type is FSDP) ---
+deepspeed_config: {}
+
+# --- End of Configuration ---
