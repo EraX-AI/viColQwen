@@ -20,7 +20,7 @@ We introduce **viColQwen**, a powerful multimodal embedding model designed to ge
 viColQwen's robustness stems from its sophisticated training strategy:
 
 1.  **Heterogeneous Data Integration:** The model is trained on a carefully curated mixture of four distinct data types, forcing it to learn diverse aspects of vision-language correlation:
-    *   **Text-Text Semantic Similarity:** Pairs of texts with continuous similarity scores (0.0 to 1.0), teaching nuanced semantic understanding. (5.6M samples)
+    *   **Text-Text Semantic Similarity:** Pairs of texts with continuous similarity scores (0.0 to 1.0), combining hard-negative, hard-negative, multi-lingual to teaching nuanced semantic understanding. (5.6M samples)
     *   **Instruction Following:** Typical Large Language Model (LLM) instructions (single and multi-turn), enhancing contextual understanding and responsiveness. (0.6M samples)
     *   **Multi-Image OCR:** Single-turn Optical Character Recognition tasks involving 1 to 5 images, grounding textual understanding in visual text. (2.5M sampples)
     *   **Multi-Image VQA:** Single and multi-turn Visual Question Answering tasks with 1 to 5 images, fostering deep visual reasoning capabilities. (2.5M samples)
