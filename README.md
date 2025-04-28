@@ -101,10 +101,14 @@ text_input = "Dựa vào hình ảnh này, hãy tóm tắt các điểm chính."
 image_input = Image.open("path/to/relevant/image.jpg").convert("RGB")
 
 # Initialize the evaluator
+CHECKPOINT_DIR = "./path/to/viColQwen/checkpoints/" # CHANGE THIS
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+EMBED_DIM = 1024
+
 evaluator = ColPaLiEvaluator(
-    checkpoint_path="./qwen2vl2b_colpali_checkpoints/final/",
-    embed_dim=1024,
-    device="cuda"
+    checkpoint_path=CHECKPOINT_DIR,
+    embed_dim=EMBED_DIM,
+    device=DEVICE
 )
 
 def process_multimodal_input(evaluator_instance, text, image, image_base_path=""):
