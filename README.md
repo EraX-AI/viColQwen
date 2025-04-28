@@ -1,7 +1,3 @@
-Okay, here is a draft for a professional, techie, arXiv-style GitHub model card for `viColQwen`. It incorporates the details you provided and aims to generate excitement for its potential applications.
-
----
-
 # viColQwen: High-Performance Multimodal Embeddings for Cross-Domain Understanding
 
 **[Model Release Pending - Stay Tuned!]**
