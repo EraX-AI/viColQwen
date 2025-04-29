@@ -25,7 +25,7 @@ viColQwen's strength lies in its sophisticated training strategy and diverse dat
     *   **Multi-Image OCR (2.5M samples):** Single-turn OCR tasks involving 1-5 images ground textual understanding in visually presented text.
     *   **Multi-Image VQA (2.5M samples):** Single/multi-turn VQA tasks with 1-5 images foster deep visual reasoning and question-answering capabilities within context.
     *   OCR/VQA are **very diversed** as well, including captioning, radiology MRI/CT scan prediction, very complex multi layers json-generated extraction, tables, maths, charts, hand-writing and many turns complex VQA 
-2.  **Mixed Loss Optimization:** Employs a combination of losses tailored to each data type (e.g., similarity regression, instruction prediction) alongside the core contrastive objective (InfoNCE or Adaptive NCE) for multifaceted learning.
+2.  **Mixed Loss Optimization:** Employs a combination of losses tailored to each data type (e.g., similarity regression, instruction prediction) alongside the core contrastive objective (InfoNCE and TripletLoss) for multifaceted learning.
 3.  **Scale and Multilinguality:** Primarily trained on Vietnamese, with substantial English and Chinese data, enabling strong performance in Vietnamese and facilitating cross-lingual transfer.
 
 ## Key Features & Advantages
