@@ -48,7 +48,7 @@ The result is 1024-dimensional embeddings that facilitate powerful downstream ap
     *(Note: For general inference/embedding, prefixes are typically omitted unless querying a specific task like OCR/VQA - see Usage Guide)*.
 *   **Output:** A single `1024-d` dense, L2-normalized vector representing the input.
 
-![viPolyQwen Architecture](example-diagrams.svg)
+![viPolyQwen Architecture](viPolyQwen-Architecture.png)
 
 ## Why Prefix Tokens Are Necessary for Different Data Modalities in Machine Learning
 
