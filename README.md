@@ -16,7 +16,7 @@ Chúng tôi giới thiệu **viPyloQwen**, một mô hình embedding đa phươn
 
 Nghiên cứu này, bao gồm việc phát triển và huấn luyện mô hình viPyloQwen, được thực hiện với sự hợp tác chặt chẽ của **đội ngũ công nghệ AI tại Công ty Cổ phần Viễn thông Di động Toàn Cầu Gtel Mobile JSC (GMobile)**. Chuyên môn kỹ thuật và sự hỗ trợ hợp tác của họ đóng vai trò vô cùng quan trọng trong suốt quá trình nghiên cứu và đào tạo mô hình.
 
-Được xây dựng trên kiến trúc vision-language mạnh mẽ **Qwen2-VL 2B Base**, viPyloQwen sử dụng một framework học tương phản (contrastive learning) tinh vi. Mặc dù lấy cảm hứng từ các phương pháp như ColPali, viPyloQwen mang đến những cải tiến đáng kể, đặc biệt qua phương pháp huấn luyện độc đáo. Mô hình được huấn luyện trên một **tập dữ liệu quy mô lớn, cực kỳ đa dạng, vượt quá 11 triệu mẫu**. Tập dữ liệu được tuyển chọn tỉ mỉ này tích hợp một cách chiến lược các cặp tương đồng ngữ nghĩa văn bản-văn bản phức tạp (với điểm số tương đồng là liên tục 0.1...0.85), dữ liệu hướng dẫn phức tạp, và có lẽ đặc biệt nhất, một bộ sưu tập lớn các tình huống Nhận dạng Ký tự Quang học (OCR) và Trả lời Câu hỏi Trực quan (VQA) đa hình ảnh.
+Được xây dựng trên kiến trúc vision-language mạnh mẽ **Qwen2-VL 2B**, viPyloQwen sử dụng một framework học tương phản (contrastive learning) tinh vi. Mặc dù lấy cảm hứng từ các phương pháp như ColPali, viPyloQwen mang đến những cải tiến đáng kể, đặc biệt qua phương pháp huấn luyện độc đáo. Mô hình được huấn luyện trên một **tập dữ liệu quy mô lớn, cực kỳ đa dạng, vượt quá 11 triệu mẫu**. Tập dữ liệu được tuyển chọn tỉ mỉ này tích hợp một cách chiến lược các cặp tương đồng ngữ nghĩa văn bản-văn bản phức tạp (với điểm số tương đồng là liên tục 0.1...0.85), dữ liệu hướng dẫn phức tạp, và có lẽ đặc biệt nhất, một bộ sưu tập lớn các tình huống Nhận dạng Ký tự Quang học (OCR) và Trả lời Câu hỏi Trực quan (VQA) đa hình ảnh.
 
 Đổi mới thuật toán cốt lõi nằm ở **chiến lược tối ưu hóa tổn thất hỗn hợp động được dẫn hướng bằng tiền tố** của viPyloQwen. Các tiền tố nhiệm vụ cụ thể (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) được thêm vào đầu vào, đóng vai trò như tín hiệu để báo hiệu loại dữ liệu. Cơ chế này **kích hoạt động một hàm loss tương ứng, được thiết kế riêng** (bao gồm InfoNCE, Triplet Loss, MSE, và tối đa hóa độ tương đồng cosine) đặc thù cho từng loại mẫu.
 
@@ -26,7 +26,7 @@ Các embedding cuối cùng được trích xuất bằng phương pháp **pooli
 
 ## Chi tiết Mô hình
 
-*   **Kiến trúc Nền tảng:** `Qwen/Qwen2-VL-2B` - Mô hình Ngôn ngữ-Thị giác (VLM) làm nền tảng.
+*   **Kiến trúc Nền tảng:** `Qwen/Qwen2-VL-2B-Instruct` - Mô hình Ngôn ngữ-Thị giác (VLM) làm nền tảng.
 *   **Chiến lược Embedding:** Không gian Embedding Thống nhất qua Học Tương phản Động được Dẫn hướng bằng Tiền tố.
 *   **Chiều Embedding:** `1024`.
 *   **Chiến lược Pooling:** **Pooling Trung bình (Mean Pooling)**. Vector embedding cuối cùng được lấy bằng cách tính trung bình các trạng thái ẩn của tất cả các token đầu ra từ lớp cuối cùng của bộ mã hóa Qwen2-VL, sau đó chuẩn hóa L2. Điều này tổng hợp thông tin trên toàn bộ chuỗi đầu vào (token văn bản và token patch hình ảnh).

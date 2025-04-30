@@ -16,7 +16,7 @@ We introduce **viPyloQwen**, an advanced multimodal embedding model designed to 
 
 This research, including the development and training of the viPyloQwen model, was conducted with close collaboration from **the AI technology team at Gtel Mobile JSC (GMobile)**. Their technical expertise and collaborative support were crucial throughout the research process and model training.
 
-Built upon the powerful **Qwen2-VL 2B Base** vision-language architecture, viPyloQwen employs a sophisticated contrastive learning framework. While inspired by approaches like ColPali, viPyloQwen introduces significant enhancements, particularly through its unique training methodology. The model is trained on a **large-scale, exceptionally diverse dataset exceeding 11 million samples**. This meticulously curated dataset strategically integrates challenging text-text semantic similarity pairs (with continuous scores), complex instruction-following data, and perhaps most distinctively, a vast collection of multi-image Optical Character Recognition (OCR) and Visual Question Answering (VQA) scenarios.
+Built upon the powerful **Qwen2-VL 2B** vision-language architecture, viPyloQwen employs a sophisticated contrastive learning framework. While inspired by approaches like ColPali, viPyloQwen introduces significant enhancements, particularly through its unique training methodology. The model is trained on a **large-scale, exceptionally diverse dataset exceeding 11 million samples**. This meticulously curated dataset strategically integrates challenging text-text semantic similarity pairs (with continuous scores), complex instruction-following data, and perhaps most distinctively, a vast collection of multi-image Optical Character Recognition (OCR) and Visual Question Answering (VQA) scenarios.
 
 The core algorithmic innovation lies in viPyloQwen's **prefix-guided dynamic mixed-loss optimization strategy**. Task-specific prefixes (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) are prepended to the input, serving as cues to signal the data type. This mechanism **dynamically triggers a corresponding, tailored loss function** (including InfoNCE, Triplet Loss, MSE, and direct cosine similarity maximization) specifically designed for each sample type.
 
@@ -26,7 +26,7 @@ Final embeddings are extracted using **mean pooling** over the encoder's output 
 
 ## Model Details
 
-*   **Base Architecture:** `Qwen/Qwen2-VL-2B` - The foundational Vision-Language Model (VLM).
+*   **Base Architecture:** `Qwen/Qwen2-VL-2B-Instruct` - The foundational Vision-Language Model (VLM).
 *   **Embedding Strategy:** Unified Embedding Space via Prefix-Guided Dynamic Contrastive Learning.
 *   **Embedding Dimension:** `1024`.
 *   **Pooling Strategy:** **Mean Pooling**. The final embedding vector is obtained by averaging the hidden states of all output tokens from the final layer of the Qwen2-VL encoder, followed by L2 normalization. This aggregates information across the entire input sequence (text tokens and image patch tokens).
