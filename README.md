@@ -151,13 +151,13 @@ anh_dau_vao = Image.open("mau_yeucau_viet_tay.jpg").convert("RGB") # Ảnh ví d
 Vui lòng trích dẫn URL của kho lưu trữ này cho đến khi có ấn phẩm chính thức.
 
 ```bibtex
-@misc{viPyloQwen_github_2024,
-  author       = {Steve Nguyen Anh Nguyen and the EraX AI Team},
+@misc{viPyloQwen_github_2025,
+  author       = {Steve Nguyen Anh Nguyen},
   title        = {viPyloQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization},
-  year         = {2024},
+  year         = {2025},
   publisher    = {GitHub},
   journal      = {GitHub repository},
-  howpublished = {\url{https://github.com/EraX-AI/viPyloQwen}} % Thay bằng URL cuối cùng
+  howpublished = {\url{https://github.com/EraX-AI/viPyloQwen}}
 }
 
 @misc{faysse2024colpali,

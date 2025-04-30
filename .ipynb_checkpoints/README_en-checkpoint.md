@@ -151,12 +151,12 @@ Please cite this repository URL until a formal publication is available.
 
 ```bibtex
 @misc{viPyloQwen_github_2024,
-  author       = {Steve Nguyen Anh Nguyen and the EraX AI Team},
+  author       = {Steve Nguyen Anh Nguyen},
   title        = {viPyloQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization},
   year         = {2024},
   publisher    = {GitHub},
   journal      = {GitHub repository},
-  howpublished = {\url{https://github.com/EraX-AI/viPyloQwen}} % Final URL
+  howpublished = {\url{https://github.com/EraX-AI/viPyloQwen}}
 }
 
 @misc{faysse2024colpali,
