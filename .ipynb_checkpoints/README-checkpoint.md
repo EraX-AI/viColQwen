@@ -51,9 +51,40 @@ Kết quả là các embedding 1024 chiều tạo điều kiện cho các ứng 
     *(Lưu ý: Đối với inference/embedding thông thường, tiền tố thường được bỏ qua trừ khi truy vấn một nhiệm vụ cụ thể như OCR/VQA - xem Hướng dẫn Sử dụng)*.
 *   **Đầu ra:** Một vector dày `1024-d` duy nhất, đã được chuẩn hóa L2, đại diện cho đầu vào.
 
+## Giải thích lý do cần có tiền tố cho các mẫu dữ liệu khác nhau khi dạy máy học
+
+Hãy phân tích vai trò riêng biệt của từng thành phần:
+
+*   **Attention Pooling**: Tập trung vào việc trích xuất thông tin từ chuỗi hidden states của encoder. Nó học cách tóm tắt chuỗi đầu ra một cách thông minh thành một vector 1D duy nhất (c) bằng cách nhấn mạnh các đặc trưng quan trọng. Nó cải thiện chất lượng của vector tóm tắt trước khi nó được dùng cho các tính toán loss. Tuy nhiên, bản thân Attention Pooling không biết dữ liệu đầu vào thuộc loại nhiệm vụ nào (text similarity, OCR, VQA...).
+*   **Dynamic Losses**: Tập trung vào việc định hình không gian embedding. Mỗi hàm loss (InfoNCE, Triplet, MSE, Cosine) áp đặt một "áp lực tối ưu" (optimization pressure) khác nhau, hướng dẫn mô hình sắp xếp các embedding sao cho phù hợp với bản chất của từng nhiệm vụ (ví dụ: đẩy xa hard negative trong Triplet, khớp điểm similarity trong MSE). Nó quyết định cách các embedding được so sánh và tối ưu.
+*   **Prefix Tokens**: Đóng vai trò như một tín hiệu rõ ràng (explicit signal) để kết nối giữa dữ liệu đầu vào và hàm loss phù hợp trong cơ chế Dynamic Losses. Nó "báo" cho hệ thống biết: "Dữ liệu này thuộc loại OCR, hãy dùng loss function X".
+
+Tại sao mô hình có thể gặp khó khăn nếu **không có Prefix**?
+
+*   Tính nhập nhằng (Ambiguity): Nếu không có prefix, mô hình phải tự suy luận (implicitly infer) loại nhiệm vụ từ cấu trúc dữ liệu đầu vào (ví dụ: sự hiện diện của ảnh, định dạng câu hỏi, sự tồn tại của điểm similarity...). Điều này khó hơn rất nhiều và dễ gây nhầm lẫn:
+*   Một câu hỏi về ảnh có thể là VQA hoặc OCQ.
+*   Một cặp text có thể là để tính similarity (cần MSE) hoặc là instruction-output (cần Cosine/NCE).
+*   Sự khác biệt giữa VQA đơn lượt và đa lượt có thể không rõ ràng nếu chỉ dựa vào input.
+Rủi ro là mô hình có thể áp dụng sai hàm loss cho một mẫu dữ liệu cụ thể, dẫn đến việc học bị nhiễu và không hiệu quả.
+*   Mục tiêu Hình học Mâu thuẫn: Các hàm loss khác nhau có thể tạo ra các yêu cầu hình học (geometric constraints) khác nhau, thậm chí đôi khi mâu thuẫn, lên không gian embedding. Ví dụ, Triplet loss yêu cầu một khoảng cách margin cụ thể giữa positive và negative, trong khi InfoNCE tập trung vào việc phân biệt positive với tất cả negative trong batch, và MSE cố gắng khớp một giá trị liên tục. Bắt một embedding duy nhất phải đồng thời thỏa mãn tất cả các yêu cầu này một cách hoàn hảo cho mọi loại dữ liệu mà không có tín hiệu rõ ràng về nhiệm vụ là một thách thức lớn. Prefix cho phép mô hình "biết" khi nào cần ưu tiên ràng buộc nào.
+*   Độ ổn định Huấn luyện: Tín hiệu rõ ràng từ prefix giúp quá trình huấn luyện ổn định hơn. Việc phụ thuộc vào suy luận ngầm có thể làm cho quá trình tối ưu khó hội tụ hơn.
+
+Lợi ích của Prefix trong Huấn luyện (Ngay cả với Attention Pooling & Dynamic Loss)
+
+*   Hướng dẫn Tối ưu Chính xác: Đảm bảo hàm loss phù hợp được áp dụng cho đúng loại dữ liệu, giúp tối ưu hóa không gian embedding một cách hiệu quả nhất cho từng cấu trúc nhiệm vụ.
+*   Học các Sắc thái Nhận biết Nhiệm vụ (Task-Aware Nuances): Prefix giúp mô hình học cách tinh chỉnh biểu diễn embedding một chút tùy thuộc vào ngữ cảnh nhiệm vụ được báo hiệu. Mặc dù đích đến là một không gian thống nhất, cách mô hình "điều hướng" trong không gian đó trong quá trình tối ưu có thể bị ảnh hưởng bởi prefix, giúp tạo ra các embedding cuối cùng mạnh mẽ và linh hoạt hơn. Ví dụ, khi thấy prefix <ocr>, mô hình có thể học cách kích hoạt các nơ-ron liên quan đến việc nhận diện và định vị văn bản mạnh mẽ hơn một chút trong quá trình tính toán loss.
+*   Tận dụng Transfer Learning Tốt hơn: Kiến thức học được từ việc tối ưu cho một nhiệm vụ (ví dụ: OCR) có thể chuyển giao và cải thiện khả năng xử lý các nhiệm vụ khác (ví dụ: hiểu văn bản tổng quát) nhờ vào việc chia sẻ tham số trong backbone. Prefix giúp quá trình học chuyên biệt này diễn ra song song với việc học tổng quát một cách có kiểm soát.
+
+Vấn đề đơn giản hóa Inference:
+
+*   Đúng là việc huấn luyện không prefix sẽ làm inference đơn giản nhất: luôn luôn chỉ cần đưa text/ảnh vào.
+*   Tuy nhiên, với cách tiếp cận hiện tại (huấn luyện có prefix), inference cho phần lớn trường hợp (embed text chunk, ảnh đơn, ảnh+mô tả) vẫn không cần prefix.
+*   Prefix chỉ thực sự cần thiết khi bạn muốn thực hiện một truy vấn mang đúng bản chất của nhiệm vụ chuyên biệt (ví dụ: tìm câu trả lời OCR/VQA) VÀ cơ sở dữ liệu của bạn cũng được xây dựng theo cách tương ứng (ít phổ biến) HOẶC bạn đang ở bước thứ 2 của quy trình two-stage (phổ biến hơn).
+*   Sự "phức tạp" thêm vào ở inference là rất nhỏ và chỉ áp dụng cho các trường hợp sử dụng rất cụ thể, đổi lại là chất lượng embedding tiềm năng cao hơn nhiều nhờ quá trình huấn luyện hiệu quả hơn.
+
 ---
 
-## Παράδειγμα Huấn luyện
+## Huấn luyện
 
 Sự mạnh mẽ và linh hoạt của viPolyQwen bắt nguồn từ sự kết hợp cộng hưởng giữa chiến lược tối ưu hóa độc đáo và dữ liệu huấn luyện cực kỳ đa dạng:
 
