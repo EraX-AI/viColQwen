@@ -230,7 +230,7 @@ def search_db(query_embedding_np, top_k=3):
         return []
 ```
 
-## -- Kịch bản Truy vấn / So sánh --
+## Kịch bản Truy vấn / So sánh
 
 ### 3a) Query bằng text thông thường
 
