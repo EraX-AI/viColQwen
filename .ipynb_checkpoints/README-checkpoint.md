@@ -2,7 +2,7 @@
   <img src="https://huggingface.co/erax-ai/EraX-Translator-V1.0/resolve/main/erax-gmobile.png?download=true" alt="Logo">
 </p>
 
-# viPyloQwen: Embedding Đa phương thức Thống nhất: Tối ưu Loss Linh hoạt theo Tín hiệu Tiền tố
+# viPolyQwen: Embedding Đa phương thức Thống nhất: Tối ưu Loss Linh hoạt theo Tín hiệu Tiền tố
 
 **(Mô hình sắp được phát hành - Vui lòng theo dõi!)**
 
@@ -12,13 +12,13 @@
 
 Các hệ thống đa phương thức hiện đại thường đối mặt với thách thức do sự phức tạp của việc quản lý các không gian embedding riêng biệt cho nhiều loại dữ liệu khác nhau (như văn bản, hình ảnh). Điều này có thể dẫn đến sự phân mảnh trong biểu diễn, quy trình truy xuất cồng kềnh và hạn chế trong khả năng suy luận chéo phương thức. 
 
-Chúng tôi giới thiệu **viPyloQwen**, một mô hình embedding đa phương thức tiên tiến, được thiết kế để tạo ra các **biểu diễn thống nhất, không gian đa chiều** cho hình ảnh, văn bản và các kết hợp tùy ý của chúng trong một không gian vector duy nhất, gắn kết. Chúng tôi đặt cho giải thuật này tên tiếng Anh là **Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization** (tên viPyloQwen là từ đây).
+Chúng tôi giới thiệu **viPolyQwen**, một mô hình embedding đa phương thức tiên tiến, được thiết kế để tạo ra các **biểu diễn thống nhất, không gian đa chiều** cho hình ảnh, văn bản và các kết hợp tùy ý của chúng trong một không gian vector duy nhất, gắn kết. Chúng tôi đặt cho giải thuật này tên tiếng Anh là **Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization** (tên viPolyQwen là từ đây).
 
-Nghiên cứu này, bao gồm việc phát triển và huấn luyện mô hình viPyloQwen, được thực hiện với sự hợp tác chặt chẽ của **đội ngũ công nghệ AI tại Công ty Cổ phần Viễn thông Di động Toàn Cầu Gtel Mobile JSC (GMobile)**. Chuyên môn kỹ thuật và sự hỗ trợ hợp tác của họ đóng vai trò vô cùng quan trọng trong suốt quá trình nghiên cứu và đào tạo mô hình.
+Nghiên cứu này, bao gồm việc phát triển và huấn luyện mô hình viPolyQwen, được thực hiện với sự hợp tác chặt chẽ của **đội ngũ công nghệ AI tại Công ty Cổ phần Viễn thông Di động Toàn Cầu Gtel Mobile JSC (GMobile)**. Chuyên môn kỹ thuật và sự hỗ trợ hợp tác của họ đóng vai trò vô cùng quan trọng trong suốt quá trình nghiên cứu và đào tạo mô hình.
 
-Được xây dựng trên kiến trúc vision-language mạnh mẽ **Qwen2-VL 2B**, viPyloQwen sử dụng một framework học tương phản (contrastive learning) tinh vi. Mặc dù lấy cảm hứng từ các phương pháp như ColPali, viPyloQwen mang đến những cải tiến đáng kể, đặc biệt qua phương pháp huấn luyện độc đáo. Mô hình được huấn luyện trên một **tập dữ liệu quy mô lớn, cực kỳ đa dạng, vượt quá 11 triệu mẫu**. Tập dữ liệu được tuyển chọn tỉ mỉ này tích hợp một cách chiến lược các cặp tương đồng ngữ nghĩa văn bản-văn bản phức tạp (với điểm số tương đồng là liên tục 0.1...0.85), dữ liệu hướng dẫn phức tạp, và có lẽ đặc biệt nhất, một bộ sưu tập lớn các tình huống Nhận dạng Ký tự Quang học (OCR) và Trả lời Câu hỏi Trực quan (VQA) đa hình ảnh.
+Được xây dựng trên kiến trúc vision-language mạnh mẽ **Qwen2-VL 2B**, viPolyQwen sử dụng một framework học tương phản (contrastive learning) tinh vi. Mặc dù lấy cảm hứng từ các phương pháp như ColPali, viPolyQwen mang đến những cải tiến đáng kể, đặc biệt qua phương pháp huấn luyện độc đáo. Mô hình được huấn luyện trên một **tập dữ liệu quy mô lớn, cực kỳ đa dạng, vượt quá 11 triệu mẫu**. Tập dữ liệu được tuyển chọn tỉ mỉ này tích hợp một cách chiến lược các cặp tương đồng ngữ nghĩa văn bản-văn bản phức tạp (với điểm số tương đồng là liên tục 0.1...0.85), dữ liệu hướng dẫn phức tạp, và có lẽ đặc biệt nhất, một bộ sưu tập lớn các tình huống Nhận dạng Ký tự Quang học (OCR) và Trả lời Câu hỏi Trực quan (VQA) đa hình ảnh.
 
-Đổi mới thuật toán cốt lõi nằm ở **chiến lược tối ưu hóa tổn thất hỗn hợp động được dẫn hướng bằng tiền tố** của viPyloQwen. Các tiền tố nhiệm vụ cụ thể (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) được thêm vào đầu vào, đóng vai trò như tín hiệu để báo hiệu loại dữ liệu. Cơ chế này **kích hoạt động một hàm loss tương ứng, được thiết kế riêng** (bao gồm InfoNCE, Triplet Loss, MSE, và tối đa hóa độ tương đồng cosine) đặc thù cho từng loại mẫu.
+Đổi mới thuật toán cốt lõi nằm ở **chiến lược tối ưu hóa tổn thất hỗn hợp động được dẫn hướng bằng tiền tố** của viPolyQwen. Các tiền tố nhiệm vụ cụ thể (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) được thêm vào đầu vào, đóng vai trò như tín hiệu để báo hiệu loại dữ liệu. Cơ chế này **kích hoạt động một hàm loss tương ứng, được thiết kế riêng** (bao gồm InfoNCE, Triplet Loss, MSE, và tối đa hóa độ tương đồng cosine) đặc thù cho từng loại mẫu.
 
 Các embedding cuối cùng được trích xuất bằng phương pháp **pooling trung bình (mean pooling)** trên các token đầu ra của bộ mã hóa, đảm bảo thu giữ toàn diện thông tin ngữ nghĩa và thị giác. Kết quả là các embedding 1024 chiều, được tạo ra từ hỗn hợp dữ liệu phong phú và chiến lược huấn luyện độc đáo này, thể hiện sự hiểu biết ngữ nghĩa và hình ảnh sâu sắc, tinh tế. Điều này giúp đơn giản hóa và nâng cao đáng kể các ứng dụng đầu cuối như Sinh Tăng cường Truy xuất (RAG) đa phương thức, Graph RAG, tìm kiếm chéo phương thức và phân tích tài liệu phức tạp. Mặc dù mô hình thể hiện hiệu suất đặc biệt mạnh mẽ bằng **tiếng Việt** do trọng tâm dữ liệu, dữ liệu huấn luyện đa ngôn ngữ (bao gồm lượng đáng kể tiếng Anh và tiếng Trung) tạo điều kiện cho khả năng **chuyển giao zero-shot** hiệu quả sang các ngôn ngữ khác.
 
@@ -42,7 +42,7 @@ Các embedding cuối cùng được trích xuất bằng phương pháp **pooli
 
 ## Huấn luyện
 
-Sự mạnh mẽ và linh hoạt của viPyloQwen bắt nguồn từ sự kết hợp cộng hưởng giữa chiến lược tối ưu hóa độc đáo và dữ liệu huấn luyện cực kỳ đa dạng:
+Sự mạnh mẽ và linh hoạt của viPolyQwen bắt nguồn từ sự kết hợp cộng hưởng giữa chiến lược tối ưu hóa độc đáo và dữ liệu huấn luyện cực kỳ đa dạng:
 
 1.  **Tập Dữ liệu Phong phú và Không đồng nhất (Hơn 11 Triệu Mẫu):** Kho dữ liệu huấn luyện tích hợp nhiều loại dữ liệu và nhiệm vụ, được liên kết thông qua các tiền tố đầu vào:
     *   **Tương đồng Ngữ nghĩa Văn bản-Văn bản (`<text_pair>`, ~5.6M):** Các cặp $(t_a, t_b)$ với điểm tương đồng $s \in [0, 1]$, thúc đẩy hiểu biết văn bản tinh tế.
@@ -67,11 +67,11 @@ Sự mạnh mẽ và linh hoạt của viPyloQwen bắt nguồn từ sự kết 
         *   `<instr>`: InfoNCE Đối xứng + Tối đa hóa Tương đồng Cosine Trực tiếp.
         *   `<ocr>`, `<vqa_single>`, `<vqa_multi>`: InfoNCE Đối xứng + Tổn thất Lề Triplet (Triplet Margin Loss) (lề có thể được điều chỉnh cho đa lượt).
 
-Sự kết hợp giữa tập dữ liệu phong phú, đa dạng về lĩnh vực và cơ chế huấn luyện thích ứng này cho phép viPyloQwen phát triển một không gian embedding thực sự thống nhất và có năng lực cao, áp dụng được trong nhiều tình huống thực tế.
+Sự kết hợp giữa tập dữ liệu phong phú, đa dạng về lĩnh vực và cơ chế huấn luyện thích ứng này cho phép viPolyQwen phát triển một không gian embedding thực sự thống nhất và có năng lực cao, áp dụng được trong nhiều tình huống thực tế.
 
 ## Chi tiết Huấn luyện
 
-Việc huấn luyện mô hình `viPyloQwen` đòi hỏi yêu cầu tài nguyên tính toán lớn, nhấn mạnh sự phức tạp của việc học từ một tập dữ liệu đa phương thức lớn và đa dạng như vậy.
+Việc huấn luyện mô hình `viPolyQwen` đòi hỏi yêu cầu tài nguyên tính toán lớn, nhấn mạnh sự phức tạp của việc học từ một tập dữ liệu đa phương thức lớn và đa dạng như vậy.
 
 *   **Phần cứng:** Mô hình được huấn luyện trên một cụm máy tính hiệu năng cao bao gồm **4x GPU NVIDIA H100 trên Vast.AI**, mỗi GPU có 94GB VRAM được kết nối qua NVLink.
 *   **Thời gian:** Giai đoạn huấn luyện chính kéo dài khoảng **15 ngày** tính toán liên tục trên cấu hình phần cứng này.
@@ -144,13 +144,13 @@ Cấu hình này cho thấy yêu cầu tài nguyên đáng kể cần thiết đ
 Vui lòng trích dẫn URL của kho lưu trữ này cho đến khi có ấn phẩm chính thức.
 
 ```bibtex
-@misc{viPyloQwen_github_2025,
+@misc{viPolyQwen_github_2025,
   author       = {Steve Nguyen Anh Nguyen EraX GMobile},
-  title        = {viPyloQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization},
+  title        = {viPolyQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization},
   year         = {2025},
   publisher    = {GitHub},
   journal      = {GitHub repository},
-  howpublished = {\url{https://github.com/EraX-AI/viPyloQwen}}
+  howpublished = {\url{https://github.com/EraX-AI/viPolyQwen}}
 }
 
 @misc{faysse2024ColPali,

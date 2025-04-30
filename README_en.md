@@ -2,7 +2,7 @@
   <img src="https://huggingface.co/erax-ai/EraX-Translator-V1.0/resolve/main/erax-gmobile.png?download=true" alt="Logo">
 </p>
 
-# viPyloQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization
+# viPolyQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization
 
 [[Tiếng Việt](README.md)] | **English**
 
@@ -12,13 +12,13 @@
 
 Modern multimodal systems often face challenges due to the complexity of managing separate embedding spaces for diverse data types (e.g., text, images). This can lead to representational fragmentation, cumbersome retrieval pipelines, and limitations in cross-modal reasoning. 
 
-We introduce **viPyloQwen**, an advanced multimodal embedding model designed to generate **high-dimensional, unified representations** for images, text, and their arbitrary combinations within a single, cohesive vector space. We called it Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization (hence viPyloQwen)
+We introduce **viPolyQwen**, an advanced multimodal embedding model designed to generate **high-dimensional, unified representations** for images, text, and their arbitrary combinations within a single, cohesive vector space. We called it Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization (hence viPolyQwen)
 
-This research, including the development and training of the viPyloQwen model, was conducted with close collaboration from **the AI technology team at Gtel Mobile JSC (GMobile)**. Their technical expertise and collaborative support were crucial throughout the research process and model training.
+This research, including the development and training of the viPolyQwen model, was conducted with close collaboration from **the AI technology team at Gtel Mobile JSC (GMobile)**. Their technical expertise and collaborative support were crucial throughout the research process and model training.
 
-Built upon the powerful **Qwen2-VL 2B** vision-language architecture, viPyloQwen employs a sophisticated contrastive learning framework. While inspired by approaches like ColPali, viPyloQwen introduces significant enhancements, particularly through its unique training methodology. The model is trained on a **large-scale, exceptionally diverse dataset exceeding 11 million samples**. This meticulously curated dataset strategically integrates challenging text-text semantic similarity pairs (with continuous scores), complex instruction-following data, and perhaps most distinctively, a vast collection of multi-image Optical Character Recognition (OCR) and Visual Question Answering (VQA) scenarios.
+Built upon the powerful **Qwen2-VL 2B** vision-language architecture, viPolyQwen employs a sophisticated contrastive learning framework. While inspired by approaches like ColPali, viPolyQwen introduces significant enhancements, particularly through its unique training methodology. The model is trained on a **large-scale, exceptionally diverse dataset exceeding 11 million samples**. This meticulously curated dataset strategically integrates challenging text-text semantic similarity pairs (with continuous scores), complex instruction-following data, and perhaps most distinctively, a vast collection of multi-image Optical Character Recognition (OCR) and Visual Question Answering (VQA) scenarios.
 
-The core algorithmic innovation lies in viPyloQwen's **prefix-guided dynamic mixed-loss optimization strategy**. Task-specific prefixes (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) are prepended to the input, serving as cues to signal the data type. This mechanism **dynamically triggers a corresponding, tailored loss function** (including InfoNCE, Triplet Loss, MSE, and direct cosine similarity maximization) specifically designed for each sample type.
+The core algorithmic innovation lies in viPolyQwen's **prefix-guided dynamic mixed-loss optimization strategy**. Task-specific prefixes (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) are prepended to the input, serving as cues to signal the data type. This mechanism **dynamically triggers a corresponding, tailored loss function** (including InfoNCE, Triplet Loss, MSE, and direct cosine similarity maximization) specifically designed for each sample type.
 
 Final embeddings are extracted using **mean pooling** over the encoder's output tokens, ensuring comprehensive capture of semantic and visual information. The resulting 1024-dimensional embeddings, derived from this rich data mixture and unique training strategy, exhibit nuanced semantic and visual understanding. This significantly simplifies and enhances downstream applications such as multimodal Retrieval-Augmented Generation (RAG), Graph RAG, cross-modal search, and complex document analysis. While demonstrating particularly strong performance in **Vietnamese** due to data focus, the model's multilingual training data (including substantial English and Chinese) facilitates effective zero-shot transfer capabilities to other languages.
 
@@ -42,7 +42,7 @@ Final embeddings are extracted using **mean pooling** over the encoder's output 
 
 ## Training Paradigm
 
-viPyloQwen's robustness and versatility stem from the synergistic combination of its unique optimization strategy and its exceptionally diverse training data:
+viPolyQwen's robustness and versatility stem from the synergistic combination of its unique optimization strategy and its exceptionally diverse training data:
 
 1.  **Heterogeneous and Rich Dataset (Over 11 Million Samples):** The training corpus integrates multiple data modalities and task types, linked via the input prefixes:
     *   **Text-Text Semantic Similarity (`<text_pair>`, ~5.6M):** Pairs $(t_a, t_b)$ with similarity scores $s \in [0, 1]$, fostering nuanced textual understanding.
@@ -67,11 +67,11 @@ viPyloQwen's robustness and versatility stem from the synergistic combination of
         *   `<instr>`: Symmetric InfoNCE + Direct Cosine Similarity Maximization.
         *   `<ocr>`, `<vqa_single>`, `<vqa_multi>`: Symmetric InfoNCE + Triplet Margin Loss (margin potentially adjusted for multi-turn).
 
-This combination of a rich, domain-diverse dataset and an adaptive training mechanism allows viPyloQwen to develop a truly unified and highly capable embedding space applicable across a wide range of real-world scenarios.
+This combination of a rich, domain-diverse dataset and an adaptive training mechanism allows viPolyQwen to develop a truly unified and highly capable embedding space applicable across a wide range of real-world scenarios.
 
 ## Training details
 
-The training of the `viPyloQwen` model involved a significant computational effort, underscoring the complexity of learning from such a large and diverse multimodal dataset.
+The training of the `viPolyQwen` model involved a significant computational effort, underscoring the complexity of learning from such a large and diverse multimodal dataset.
 
 *   **Hardware:** The model was trained on a high-performance computing cluster equipped with **4x NVIDIA H100 GPUs on Vast.AI**, each with 94GB of VRAM connected via NVLink.
 *   **Duration:** The primary training phase spanned approximately **15 days** of continuous computation on this hardware setup.
@@ -144,13 +144,13 @@ This setup highlights the substantial resources required to train state-of-the-a
 Please cite this repository URL until a formal publication is available.
 
 ```bibtex
-@misc{viPyloQwen_github_2024,
+@misc{viPolyQwen_github_2024,
   author       = {Steve Nguyen Anh Nguyen Erax GMobile},
-  title        = {viPyloQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization},
+  title        = {viPolyQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization},
   year         = {2024},
   publisher    = {GitHub},
   journal      = {GitHub repository},
-  howpublished = {\url{https://github.com/EraX-AI/viPyloQwen}}
+  howpublished = {\url{https://github.com/EraX-AI/viPolyQwen}}
 }
 
 @misc{faysse2024colpali,
