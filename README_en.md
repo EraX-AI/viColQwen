@@ -4,7 +4,7 @@
 
 # viPyloQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization
 
-[[Tiếng Việt](README.en)] | **English**
+[[Tiếng Việt](README.md)] | **English**
 
 **(Model Release Pending - Stay Tuned!)**
 
