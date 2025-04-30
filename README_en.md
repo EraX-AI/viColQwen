@@ -111,7 +111,7 @@ This setup highlights the substantial resources required to train state-of-the-a
 
 ---
 
-## How to Use (Conceptual Example): [[Usage Guide](USAGE.md)]
+## How to Use (Conceptual Example): [Usage Guide](USAGE.md)
 
 ---
 

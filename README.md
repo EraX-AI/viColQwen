@@ -111,7 +111,7 @@ Cấu hình này cho thấy yêu cầu tài nguyên đáng kể cần thiết đ
 
 ---
 
-## Cách Sử dụng (Ví dụ Khái niệm):[[Usage Guide](USAGE.md)]
+## Cách Sử dụng (Ví dụ Khái niệm): [Usage Guide](USAGE.md)
 
 ---
 
