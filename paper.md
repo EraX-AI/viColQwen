@@ -1,21 +1,3 @@
----
-title: "viPolyQwen: Synergizing Prefix-Guided Dynamic Loss Optimization and Attention Pooling for Unified Multimodal Embeddings"
-author: "Nguyen Anh Nguyen\\*, EraX AI Team, AI Technology Team, Gtel Mobile JSC (GMobile)"
-date: "\\*Corresponding Author: nguyen@hatto.com"
-bibliography: references.bib
-csl: ieee.csl
-header-includes:
-  - \usepackage{amsmath}
-  - \usepackage{amssymb}
-  - \usepackage{booktabs}
-  - \usepackage{colortbl}
-  - \usepackage{hyperref}
-  - \usepackage{float}
-  - \floatplacement{figure}{H}
----
-
-**IMPORTANT DISCLAIMER:** The benchmark results presented in Tables 1, 2, 3, and 4 below are **ILLUSTRATIVE AND SIMULATED** for the sole purpose of demonstrating the paper's structure and arguments. They **DO NOT** represent actual experimental outcomes of the `viPolyQwen` model. **These results MUST be replaced with real, validated benchmark data before any dissemination or claim of performance.**
-
 # viPolyQwen: Synergizing Prefix-Guided Dynamic Loss Optimization and Attention Pooling for Unified Multimodal Embeddings
 
 **Nguyen Anh Nguyen\***, **EraX AI Team**, **AI Technology Team, Gtel Mobile JSC (GMobile)**
@@ -144,7 +126,7 @@ The model is trained on a composite dataset $\mathcal{D}$ (>11M samples) coverin
 *   **OCR/OCQ (`<ocr>`):** (Image(s)+Question, Answer) triples $(x_i, y_i)$.
 *   **Single/Multi-turn VQA (`<vqa_...>`)**: (Image(s)+Context/Question, Answer) triples $(x_i, y_i)$.
 
-The dataset is predominantly Vietnamese ($\approx$60%), with English ($\approx$30%) and Chinese ($\approx$10%) portions.
+The dataset is predominantly Vietnamese (approximately 60%), with English (approximately 30%) and Chinese (approximately 10%) portions.
 
 ### 4.2 Prefix-Guided Dynamic Mixed-Loss Optimization
 
@@ -185,7 +167,7 @@ The overall batch loss is $\mathcal{L}_{\mathrm{batch}} = \frac{1}{B} \sum_{i=1}
 *   **LR:** $1 \times 10^{-4}$ initial, cosine decay, 5% warmup.
 *   **Batch:** Per-device 24, grad accum 8 (Global: 768).
 *   **Seq Len:** 8192 tokens.
-*   **Epochs:** 2 ($\approx$ 15 days training).
+*   **Epochs:** 2 (approximately 15 days training).
 *   **Regularization:** Weight decay 0.001, max grad norm 1.0.
 *   **Loss Params:** $T=0.07$, $m=0.2$ (base). $\lambda$'s = 1.0.
 *   **Tokenizer:** Extended Qwen-VL tokenizer, embedding layer resized.
