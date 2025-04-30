@@ -1,3 +1,21 @@
+---
+title: "viPolyQwen: Synergizing Prefix-Guided Dynamic Loss Optimization and Attention Pooling for Unified Multimodal Embeddings"
+author: "Nguyen Anh Nguyen\\*, EraX AI Team, AI Technology Team, Gtel Mobile JSC (GMobile)"
+date: "\\*Corresponding Author: nguyen@hatto.com"
+header-includes:
+  - \usepackage{amsmath}
+  - \usepackage{amssymb}
+  - \usepackage{booktabs}
+  - \usepackage{colortbl}
+  - \usepackage{hyperref}
+  - \usepackage{float}
+  - \usepackage{geometry}
+  - \geometry{margin=0.75in}
+  - \usepackage{setspace}
+  - \setstretch{0.95}
+  - \usepackage{caption}
+  - \captionsetup{font=small}
+---
 # viPolyQwen: Synergizing Prefix-Guided Dynamic Loss Optimization and Attention Pooling for Unified Multimodal Embeddings
 
 **Nguyen Anh Nguyen\***, **EraX AI Team**, **AI Technology Team, Gtel Mobile JSC (GMobile)**
@@ -184,53 +202,12 @@ We evaluate `viPolyQwen` on standard multimodal benchmarks and specific tasks.
 *   **Metrics:** Recall@K (R@K), Mean Rank (MeanR) for retrieval; Spearman correlation ($\rho$) for STS; Page Retrieval Accuracy (Acc@K) for DocVQA context.
 *   **Baselines:** CLIP ViT-L/14 [@radford2021learning], Qwen2-VL-2B (Base MP - Mean Pooling), mCLIP/XLM-R (Multilingual TBD), `viPolyQwen-MeanPool` (Our method w/ Mean Pooling), `viPolyQwen-NCEOnly` (Our method w/ only InfoNCE loss). Conceptual comparison with ColPali [@faysse2024colpali].
 
-### 5.2 Main Results (Simulated)
+### 5.2 Benchmarks & Ablation Studies shall be published shortly
 
-**Table 1: Simulated Zero-Shot Image-Text Retrieval Results.**
-
-| Model                | Dataset     | Modality | R@1  | R@5  | R@10 | MeanR |
-| :------------------- | :---------- | :------- | :--- | :--- | :--- | :---- |
-| CLIP ViT-L/14        | MS-COCO     | T->I     | 59.1 | 83.5 | 90.2 | 4.5   |
-|                      |             | I->T     | 75.7 | 94.1 | 97.3 | 2.1   |
-| Qwen2-VL (Base MP)   | MS-COCO     | T->I     | 52.5 | 78.0 | 86.1 | 7.2   |
-|                      |             | I->T     | 70.3 | 90.5 | 94.8 | 3.5   |
-| `viPolyQwen-MeanPool`| MS-COCO     | T->I     | 57.8 | 82.9 | 89.8 | 5.1   |
-|                      |             | I->T     | 74.5 | 93.5 | 96.9 | 2.4   |
-| `viPolyQwen-NCEOnly` | MS-COCO     | T->I     | 58.2 | 83.1 | 90.0 | 4.9   |
-|                      |             | I->T     | 75.0 | 93.8 | 97.1 | 2.3   |
-| **`viPolyQwen` (Ours)** | **MS-COCO**| **T->I** | **59.5** | **84.0** | **90.8** | **4.3** |
-|                      |             | **I->T** | **76.1** | **94.5** | **97.5** | **2.0** |
-| *... (Flickr30k shows similar trend with higher absolute numbers)* | | | | | | |
-
-**Table 2: Simulated Vietnamese Task Performance (ViSTS).**
-
-| Model                     | Metric (Spearman $\rho$) |
-| :------------------------ | :----------------------- |
-| XLM-R (Avg Pool)          | 0.72                     |
-| Qwen2-VL (Base MP)        | 0.76                     |
-| `viPolyQwen-MeanPool`     | 0.81                     |
-| `viPolyQwen-NCEOnly`      | 0.82                     |
-| **`viPolyQwen` (Ours)**    | **0.85**                 |
-
-**Table 3: Simulated Document Context Retrieval (DocVQA Page Acc@K).**
-
-| Model                     | Acc@1 / Acc@5 |
-| :------------------------ | :------------ |
-| Qwen2-VL (Base MP)        | 0.65 / 0.85   |
-| `viPolyQwen-MeanPool`     | 0.72 / 0.90   |
-| `viPolyQwen-NCEOnly`      | 0.73 / 0.91   |
-| **`viPolyQwen` (Ours)**    | **0.76 / 0.93**|
-
-### 5.3 Ablation Studies (Simulated)
-
-**Table 4: Simulated Ablation Study Results (Internal Val Set).**
-
-| Model Variant             | Aggregated Val Loss | Retrieval R@1 (Internal) |
-| :------------------------ | :------------------ | :----------------------- |
-| **`viPolyQwen` (Full)**    | **0.45**            | **0.88**                 |
-| `viPolyQwen-MeanPool`     | 0.58                | 0.81                     |
-| `viPolyQwen-NCEOnly`      | 0.52                | 0.84                     |
-| Qwen2-VL (Base MP)        | 0.65                | 0.75                     |
+**Table 1: Zero-Shot Image-Text Retrieval Results.**
+**Table 2: Vietnamese Task Performance (ViSTS).**
+**Table 3: Document Context Retrieval (DocVQA Page Acc@K).**
+**Table 4: Ablation Study Results (Internal Val Set).**
 
 ## 6. Discussion
 
@@ -247,3 +224,230 @@ We introduced `viPolyQwen`, a unified multimodal embedding model employing prefi
 Immediate future work involves rigorous empirical validation of these findings on public benchmarks. Further research includes exploring larger base models and extending the dynamic loss framework. Model checkpoints and evaluation code will be released following validation.
 
 ## References
+
+```bibtex
+@inproceedings{lewis2020retrieval,
+  title={Retrieval-augmented generation for knowledge-intensive nlp tasks},
+  author={Lewis, Patrick and Perez, Ethan and Piktus, Aleksandra and Petroni, Fabio and Karpukhin, Vladimir and Goyal, Naman and K{\"u}ttler, Heinrich and Lewis, Mike and Yih, Wen-tau and Rockt{\"a}schel, Tim and Riedel, Sebastian and Kiela, Douwe},
+  booktitle={Advances in Neural Information Processing Systems (NeurIPS)},
+  year={2020}
+}
+
+@inproceedings{radford2021learning,
+  title={Learning transferable visual models from natural language supervision},
+  author={Radford, Alec and Kim, Jong Wook and Hallacy, Chris and Ramesh, Aditya and Goh, Gabriel and Agarwal, Sandhini and Sastry, Girish and Askell, Amanda and Mishkin, Pamela and Clark, Jack and Krueger, Gretchen and Sutskever, Ilya},
+  booktitle={International Conference on Machine Learning (ICML)},
+  year={2021}
+}
+
+@article{bai2023qwen,
+  title={Qwen-vl: A versatile vision-language model for understanding, localization, text reading, and beyond},
+  author={Bai, Jinze and Bai, Shuai and Yang, Shusheng and Wang, Shijie and Tan, Sinan and Wang, Peng and Lin, Junyang and Zhou, Chenyu and Zhou, Jingren},
+  journal={arXiv preprint arXiv:2308.12966},
+  year={2023}
+}
+
+@inproceedings{alayrac2022flamingo,
+  title={Flamingo: a visual language model for few-shot learning},
+  author={Alayrac, Jean-Baptiste and Donahue, Jeff and Dieleman, Pauline and Clark, Aidan and Dadat, Mateusz and Davison, Adria and Lavril, Antoine and Lavril, Typhaine and Lazaridou, Angeliki and Learn, Clark and others},
+  booktitle={Advances in Neural Information Processing Systems (NeurIPS)},
+  year={2022}
+}
+
+@article{faysse2024colpali,
+  title={Colpali: Efficient document retrieval with vision language models},
+  author={Faysse, Matthieu and Sibille, Hugo and Wu, Tianyu and Omrani, Baharan and Viaud, Gaël and Hudelot, Céline and Colombo, Pierre},
+  journal={arXiv preprint arXiv:2407.01449},
+  year={2024}
+}
+
+@article{zhang2023beyond,
+  title={Beyond pixels and patches: Utilizing vlm for document information extraction},
+  author={Zhang, Zilong and Müller, Rafael and Morris, William and Awadallah, Ahmed and Mei, Chen},
+  journal={arXiv preprint arXiv:2310.00425},
+  year={2023}
+}
+
+@inproceedings{khattab2020colbert,
+  title={Colbert: Efficient and effective passage search via contextualized late interaction over bert},
+  author={Khattab, Omar and Zaharia, Matei},
+  booktitle={Proceedings of the 43rd International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR)},
+  year={2020}
+}
+
+@article{johnson2019billion,
+  title={Billion-scale similarity search with gpus},
+  author={Johnson, Jeff and Douze, Matthijs and J{\'e}gou, Hervé},
+  journal={IEEE Transactions on Big Data},
+  volume={7},
+  number={3},
+  pages={535--547},
+  year={2019}
+}
+
+@inproceedings{jia2021scaling,
+  title={Scaling up visual and vision-language representation learning with noisy text supervision},
+  author={Jia, Chao and Yang, Yinfei and Xia, Ye and Chen, Yi-Ting and Parekh, Zarana and Pham, Hieu and Le, Quoc V and Sung, Yun-Hsuan and Li, Zhen and Duerig, Tom},
+  booktitle={International Conference on Machine Learning (ICML)},
+  year={2021}
+}
+
+@article{yuan2021florence,
+  title={Florence: A new foundation model for computer vision},
+  author={Yuan, Lu and Chen, Dongdong and Chen, Yi-Ling and Codella, Noel and Dai, Xiyang and Gao, Jianfeng and Hu, Houdong and Huang, Xuedong and Hsieh, Bo-K and Jegelka, Stefanie and others},
+  journal={arXiv preprint arXiv:2111.11432},
+  year={2021}
+}
+
+@inproceedings{li2022blip,
+  title={Blip: Bootstrapping language-image pre-training for unified vision-language understanding and generation},
+  author={Li, Junnan and Li, Dongxu and Xiong, Caiming and Hoi, Steven},
+  booktitle={International Conference on Machine Learning (ICML)},
+  year={2022}
+}
+
+@article{yu2022coca,
+  title={Coca: Contrastive captioners are image-text foundation models},
+  author={Yu, Jiahui and Wang, Zirui and Vasudevan, Vijay and Yeung, Legg and Salz, Michael and Wu, Yun-Hsuan},
+  journal={arXiv preprint arXiv:2205.01917},
+  year={2022}
+}
+
+@article{chen2022pali,
+  title={Pali: A jointly-scaled multilingual vision-language model},
+  author={Chen, Xi and Wang, Xiao and Changpinyo, Soravit and Piergiovanni, AJ and Padlewski, Piotr and Salz, Daniel and Goodman, Sebastian and Grygiel, Adam and Pang, Keran and Molina, Jing Yu and others},
+  journal={arXiv preprint arXiv:2209.06794},
+  year={2022}
+}
+
+@inproceedings{xu2020layoutlm,
+  title={Layoutlm: Pre-training of text and layout for document image understanding},
+  author={Xu, Yiheng and Li, Minghao and Cui, Lei and Huang, Shaohan and Wei, Furu and Zhou, Ming},
+  booktitle={Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining (KDD)},
+  year={2020}
+}
+
+@inproceedings{huang2022layoutlmv3,
+  title={Layoutlmv3: Pre-training for document ai with unified text and image masking},
+  author={Huang, Yupan and Lv, Tengchao and Cui, Lei and Lu, Yutong and Wei, Furu},
+  booktitle={Proceedings of the 30th ACM International Conference on Multimedia (ACM MM)},
+  year={2022}
+}
+
+@inproceedings{reimers2019sentence,
+  title={Sentence-bert: Sentence embeddings using siamese bert-networks},
+  author={Reimers, Nils and Gurevych, Iryna},
+  booktitle={Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  year={2019}
+}
+
+@inproceedings{bahdanau2014neural,
+  title={Neural machine translation by jointly learning to align and translate},
+  author={Bahdanau, Dzmitry and Cho, Kyunghyun and Bengio, Yoshua},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2015}
+}
+
+@inproceedings{lin2017structured,
+  title={A structured self-attentive sentence embedding},
+  author={Lin, Zhouhan and Feng, Minwei and Santos, Cicero Nogueira dos and Yu, Mo and Xiang, Bing and Zhou, Bowen and Bengio, Yoshua},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2017}
+}
+
+@article{caruana1997multitask,
+  title={Multitask learning},
+  author={Caruana, Rich},
+  journal={Machine learning},
+  volume={28},
+  number={1},
+  pages={41--75},
+  year={1997}
+}
+
+@inproceedings{kendall2018multi,
+  title={Multi-task learning using uncertainty to weigh losses for scene geometry and semantics},
+  author={Kendall, Alex and Gal, Yarin and Cipolla, Roberto},
+  booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year={2018}
+}
+
+@inproceedings{chen2018gradnorm,
+  title={Gradnorm: Gradient normalization for adaptive loss balancing in deep multitask networks},
+  author={Chen, Zhao and Badrinarayanan, Vijay and Lee, Chen-Yu and Rabinovich, Andrew},
+  booktitle={International Conference on Machine Learning (ICML)},
+  year={2018}
+}
+
+@inproceedings{conneau2019unsupervised,
+  title={Unsupervised cross-lingual representation learning at scale},
+  author={Conneau, Alexis and Khandelwal, Kartikay and Goyal, Naman and Chaudhary, Vishrav and Wenzek, Guillaume and Guzmán, Francisco and Grave, Edouard and Ott, Myle and Zettlemoyer, Luke and Stoyanov, Veselin},
+  booktitle={Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics (ACL)},
+  year={2020}
+}
+
+@inproceedings{devlin2019bert,
+  title={Bert: Pre-training of deep bidirectional transformers for language understanding},
+  author={Devlin, Jacob and Chang, Ming-Wei and Lee, Kenton and Toutanova, Kristina},
+  booktitle={Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (NAACL-HLT)},
+  year={2019}
+}
+
+@article{ba2016layer,
+  title={Layer normalization},
+  author={Ba, Jimmy Lei and Kiros, Jamie Ryan and Hinton, Geoffrey E},
+  journal={arXiv preprint arXiv:1607.06450},
+  year={2016}
+}
+
+@inproceedings{loshchilov2017decoupled,
+  title={Decoupled weight decay regularization},
+  author={Loshchilov, Ilya and Hutter, Frank},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2019}
+}
+
+@inproceedings{lin2014microsoft,
+  title={Microsoft coco: Common objects in context},
+  author={Lin, Tsung-Yi and Maire, Michael and Belongie, Serge and Hays, James and Perona, Pietro and Ramanan, Deva and Dollár, Piotr and Zitnick, C Lawrence},
+  booktitle={European conference on computer vision (ECCV)},
+  year={2014}
+}
+
+@article{young2014image,
+  title={From image descriptions to visual denotations: New similarity metrics for semantic inference over event descriptions},
+  author={Young, Peter and Lai, Alice and Hodosh, Micah and Hockenmaier, Julia},
+  journal={Transactions of the Association for Computational Linguistics},
+  volume={2},
+  pages={67--78},
+  year={2014}
+}
+
+@inproceedings{nguyen2023vietnamesests,
+  title={A comprehensive benchmark for vietnamese text evaluation},
+  author={Nguyen, T. A. and others},
+  booktitle={Proc. VLSP},
+  year={2023}
+}
+
+@inproceedings{mathew2021docvqa,
+  title={Docvqa: A dataset for vqa on document images},
+  author={Mathew, Minesh and Karatzas, R and Jawahar, C V},
+  booktitle={Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision (WACV)},
+  year={2021}
+}
+
+@inproceedings{reimers2020making,
+  title={Making monolingual sentence embeddings multilingual using knowledge distillation},
+  author={Reimers, Nils and Gurevych, Iryna},
+  booktitle={Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  year={2020}
+}
+
+@misc{vipolyqwen2024repo,
+  title={viPolyQwen GitHub Repository},
+  author={Nguyen, Nguyen Anh and others},
+  howpublished={\url{https://github.com/EraX-AI/viPolyQwen}},
+  year={2024}
+}
+```
