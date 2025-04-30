@@ -1,3 +1,7 @@
+<p align="left">
+  <img src="https://cdn-uploads.huggingface.co/production/uploads/63d8d8879dfcfa941d4d7cd9/GsQKdaTyn2FFx_cZvVHk3.png" alt="Logo">
+</p>
+
 # viPyloQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization
 
 [[Tiếng Việt](README.en)] | **English**

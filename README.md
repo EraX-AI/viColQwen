@@ -1,3 +1,7 @@
+<p align="left">
+  <img src="https://cdn-uploads.huggingface.co/production/uploads/63d8d8879dfcfa941d4d7cd9/GsQKdaTyn2FFx_cZvVHk3.png" alt="Logo">
+</p>
+
 # viPyloQwen: Embedding Đa phương thức Thống nhất: Tối ưu Loss Linh hoạt theo Tín hiệu Tiền tố
 
 **(Mô hình sắp được phát hành - Vui lòng theo dõi!)**
