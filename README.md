@@ -1,8 +1,8 @@
-# Introduce viOmniQwen-V1.0: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization
+# Introduce viOmniQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization
 
 ## Abstract
 
-Các hệ thống đa phương thức hiện đại thường gặp trở ngại bởi sự phức tạp của việc quản lý không gian embedding riêng biệt cho từng loại dữ liệu (văn bản, hình ảnh), dẫn đến sự phân mảnh trong biểu diễn, quy trình truy xuất phức tạp và hạn chế trong khả năng suy luận chéo phương thức. Chúng tôi giới thiệu **viOmniQwen-V1.0**, một mô hình embedding đa phương thức tiên tiến, được thiết kế để tạo ra các biểu diễn **thống nhất, chiều cao** cho hình ảnh, văn bản và các kết hợp tùy ý của chúng trong một không gian vector duy nhất. Dựa trên kiến trúc vision-language mạnh mẽ **Qwen2-VL 2B**, viOmniQwen-V1.0 áp dụng một phương pháp học tương phản (contrastive learning) tinh vi, lấy cảm hứng từ ColPali nhưng được cải tiến đáng kể. Mô hình được huấn luyện trên một tập dữ liệu **đa dạng quy mô lớn (hơn 11 triệu mẫu)**, tích hợp một cách chiến lược các cặp tương đồng ngữ nghĩa văn bản-văn bản phức tạp (với điểm số liên tục), dữ liệu hướng dẫn phức tạp, tác vụ OCR đa hình ảnh và VQA đa hình ảnh. Điểm độc đáo cốt lõi nằm ở **chiến lược tối ưu hóa tổn thất hỗn hợp động (dynamic mixed-loss optimization)**, được dẫn hướng bởi các **tiền tố nhiệm vụ cụ thể (task-specific prefixes)**. Các tiền tố này (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) được thêm vào đầu vào để báo hiệu loại dữ liệu và kích hoạt một **hàm loss tương ứng** (bao gồm InfoNCE, Triplet Loss, MSE, và tối đa hóa độ tương đồng cosine) được thiết kế riêng cho từng loại mẫu. Embedding cuối cùng được trích xuất bằng phương pháp **mean pooling**, thu giữ thông tin ngữ nghĩa và thị giác một cách toàn diện. Kết quả là các embedding 1024 chiều thể hiện sự hiểu biết ngữ nghĩa và hình ảnh sâu sắc, giúp đơn giản hóa và nâng cao đáng kể các ứng dụng như RAG đa phương thức, Graph RAG, tìm kiếm chéo phương thức và phân tích tài liệu phức tạp, đặc biệt trong bối cảnh ngôn ngữ Việt.
+Các hệ thống đa phương thức hiện đại thường gặp trở ngại bởi sự phức tạp của việc quản lý không gian embedding riêng biệt cho từng loại dữ liệu (văn bản, hình ảnh), dẫn đến sự phân mảnh trong biểu diễn, quy trình truy xuất phức tạp và hạn chế trong khả năng suy luận chéo phương thức. Chúng tôi giới thiệu **viOmniQwen**, một mô hình embedding đa phương thức tiên tiến, được thiết kế để tạo ra các biểu diễn **thống nhất, chiều cao** cho hình ảnh, văn bản và các kết hợp tùy ý của chúng trong một không gian vector duy nhất. Dựa trên kiến trúc vision-language mạnh mẽ **Qwen2-VL 2B**, viOmniQwen áp dụng một phương pháp học tương phản (contrastive learning) tinh vi, lấy cảm hứng từ ColPali nhưng được cải tiến đáng kể. Mô hình được huấn luyện trên một tập dữ liệu **đa dạng quy mô lớn (hơn 11 triệu mẫu)**, tích hợp một cách chiến lược các cặp tương đồng ngữ nghĩa văn bản-văn bản phức tạp (với điểm số liên tục), dữ liệu hướng dẫn phức tạp, tác vụ OCR đa hình ảnh và VQA đa hình ảnh. Điểm độc đáo cốt lõi nằm ở **chiến lược tối ưu hóa tổn thất hỗn hợp động (dynamic mixed-loss optimization)**, được dẫn hướng bởi các **tiền tố nhiệm vụ cụ thể (task-specific prefixes)**. Các tiền tố này (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) được thêm vào đầu vào để báo hiệu loại dữ liệu và kích hoạt một **hàm loss tương ứng** (bao gồm InfoNCE, Triplet Loss, MSE, và tối đa hóa độ tương đồng cosine) được thiết kế riêng cho từng loại mẫu. Embedding cuối cùng được trích xuất bằng phương pháp **mean pooling**, thu giữ thông tin ngữ nghĩa và thị giác một cách toàn diện. Kết quả là các embedding 1024 chiều thể hiện sự hiểu biết ngữ nghĩa và hình ảnh sâu sắc, giúp đơn giản hóa và nâng cao đáng kể các ứng dụng như RAG đa phương thức, Graph RAG, tìm kiếm chéo phương thức và phân tích tài liệu phức tạp, đặc biệt trong bối cảnh ngôn ngữ Việt.
 
 ---
 
@@ -31,7 +31,7 @@ Các hệ thống đa phương thức hiện đại thường gặp trở ngại
 
 ## Training Paradigm
 
-Sức mạnh của viOmniQwen-V1.0 đến từ sự kết hợp giữa tập dữ liệu đa dạng và chiến lược tối ưu hóa độc đáo:
+Sức mạnh của viOmniQwen đến từ sự kết hợp giữa tập dữ liệu đa dạng và chiến lược tối ưu hóa độc đáo:
 
 1.  **Heterogeneous Dataset (Hơn 11 Triệu Mẫu):** Tích hợp 4 loại dữ liệu chính, liên kết với các tiền tố:
     *   **Text-Text Semantic Similarity (`<text_pair>`, ~5.6M):** Cặp $(t_a, t_b)$ với điểm số $`s \in [0, 1]`$.
@@ -73,10 +73,10 @@ Sức mạnh của viOmniQwen-V1.0 đến từ sự kết hợp giữa tập d�
 ```python
 import torch
 from PIL import Image
-# Assume viOmniQwen-V1.0Embedder class available after release
-# from viOmniQwen-V1.0_embedder import viOmniQwen-V1.0Embedder
+# Assume viOmniQwenEmbedder class available after release
+# from viOmniQwen_embedder import viOmniQwenEmbedder
 
-# embedder = viOmniQwen-V1.0Embedder(checkpoint_path="./path/to/viOmniQwen-V1.0/", device="cuda")
+# embedder = viOmniQwenEmbedder(checkpoint_path="./path/to/viOmniQwen/", device="cuda")
 
 # --- Example: VQA Single Turn ---
 # Note: The embedder's encode method should handle prefix internally,
@@ -129,9 +129,9 @@ text_b = "A feline rested upon the rug."
 ## Citation
 
 ```bibtex
-@misc{viOmniQwen-V1.0_github_2024,
+@misc{viOmniQwen_github_2024,
   author       = {Steve Nguyen Anh Nguyen and the EraX AI Team},
-  title        = {viOmniQwen-V1.0: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization},
+  title        = {viOmniQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization},
   year         = {2024},
   publisher    = {GitHub},
   journal      = {GitHub repository},
