@@ -69,7 +69,7 @@ viPyloQwen's robustness and versatility stem from the synergistic combination of
 
 This combination of a rich, domain-diverse dataset and an adaptive training mechanism allows viPyloQwen to develop a truly unified and highly capable embedding space applicable across a wide range of real-world scenarios.
 
-## Trainign details
+## Training details
 
 The training of the `viPyloQwen` model involved a significant computational effort, underscoring the complexity of learning from such a large and diverse multimodal dataset.
 
