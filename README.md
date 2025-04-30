@@ -1,4 +1,4 @@
-# viPyloQwen: Embedding Đa phương thức Thống nhất qua Cơ chế Tối ưu Loss Động Dẫn hướng bằng Tiền tố
+# viPyloQwen: Embedding Đa phương thức Thống nhất: Tối ưu Loss Linh hoạt theo Tín hiệu Tiền tố
 (Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization)
 
 **(Mô hình sắp được phát hành - Vui lòng theo dõi!)**
