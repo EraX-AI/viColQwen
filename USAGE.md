@@ -20,45 +20,40 @@ logging.basicConfig(
 logger = logging.getLogger("viPyloQwen_Usage")
 
 # -- Cấu hình Model và Device --
-# !!! THAY THẾ BẰNG ĐƯỜNG DẪN THỰC TẾ ĐẾN MODEL ĐÃ HUẤN LUYỆN CỦA BẠN !!!
 MODEL_PATH = "./path/to/your/finetuned_viPyloQwen_model"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
 # Kích thước embedding bạn đã huấn luyện (ví dụ: 1024)
 EXPECTED_EMBED_DIM = 1024
+
 # Kích thước batch cho inference (điều chỉnh tùy theo VRAM)
 INFERENCE_BATCH_SIZE = 16
+
 # Độ dài sequence tối đa (nếu cần override processor default)
-MAX_LENGTH = None # Để None sẽ dùng processor default
+MAX_LENGTH = 8192
 
 logger.info(f"Starting viPyloQwen Usage Script on device: {DEVICE}")
 logger.info(f"Attempting to load model from: {MODEL_PATH}")
 
 # -- Load Model và Processor --
 try:
-    # Import lớp model từ file đã cập nhật
-    from model import ViPolyQwenEmbedder as ViPyloQwenEmbedder # Đổi tên khi import cho rõ
+    from model import ViPolyQwenEmbedder as ViPyloQwenEmbedder
     logger.info(f"Imported ViPyloQwenEmbedder from model.py")
 
-    # Load processor từ cùng đường dẫn model (quan trọng)
     processor = AutoProcessor.from_pretrained(MODEL_PATH, trust_remote_code=True)
     logger.info(f"Processor loaded successfully.")
 
     # Load model viPyloQwen đã huấn luyện
-    # Truyền embed_dim đúng vào đây nếu config của model không lưu
     embedder = ViPyloQwenEmbedder.from_pretrained(
         MODEL_PATH,
-        embed_dim=EXPECTED_EMBED_DIM, # Đảm bảo embed_dim đúng
+        embed_dim=EXPECTED_EMBED_DIM,
+        processor = processor,
         trust_remote_code=True
     )
     logger.info(f"Model loaded successfully.")
 
-    # Gán processor cho embedder nếu __init__ không tự làm
-    if not hasattr(embedder, 'processor') or embedder.processor is None:
-         embedder.processor = processor
-         logger.info("Processor assigned to embedder instance.")
-
     embedder.to(DEVICE)
-    embedder.eval() # Chuyển sang chế độ inference
+    embedder.eval()
     logger.info(f"Model moved to {DEVICE} and set to evaluation mode.")
 
 except FileNotFoundError:
@@ -72,10 +67,7 @@ except Exception as e:
 
 # --- Phần 2: Tạo Embeddings cho Lưu trữ (Mô phỏng Vector DB) ---
 
-logger.info("\n--- Part 2: Generating Embeddings for Storage (Simulated DB) ---")
-
-# -- Dữ liệu mẫu --
-# !!! THAY THẾ BẰNG ĐƯỜNG DẪN VÀ DỮ LIỆU THỰC TẾ CỦA BẠN !!!
+# -- Dữ liệu ví dụ --
 sample_data = {
     "doc1_chunk1": {"type": "text", "content": "Hợp đồng này quy định các điều khoản về việc cung cấp dịch vụ điện toán đám mây."},
     "doc1_chunk2": {"type": "text", "content": "Bên B chịu trách nhiệm bảo mật thông tin khách hàng."},
@@ -89,7 +81,7 @@ sample_data = {
     "scan_vqa_q1": {"type": "vqa_task", "path": "sample_images/medical_scan.jpg", "question": "Phát hiện có khối u bất thường ở thùy trên phổi trái không?"},
 }
 
-# -- Lưu trữ mô phỏng --
+# -- Lưu trữ vector DB mô phỏng --
 vector_database = {} # Lưu {id: numpy_embedding}
 metadata_database = {} # Lưu {id: metadata}
 
@@ -129,7 +121,7 @@ for item_id, data in sample_data.items():
         try:
             image_input = Image.open(data["path"]).convert("RGB")
             text_input = data["question"]
-            prefix_to_use = "<ocr>" # <<<<< DÙNG PREFIX OCR >>>>>
+            prefix_to_use = "<ocr>" # <<<<< PHẢI DÙNG PREFIX OCR >>>>>
         except FileNotFoundError:
             logger.warning(f"Image file not found for {item_id}: {data['path']}. Skipping.")
             continue
@@ -138,7 +130,7 @@ for item_id, data in sample_data.items():
             image_input = Image.open(data["path"]).convert("RGB")
             text_input = data["question"]
             # Có thể chọn <vqa_single> hoặc <vqa_multi> tùy ngữ cảnh
-            prefix_to_use = "<vqa_single>" # <<<<< DÙNG PREFIX VQA >>>>>
+            prefix_to_use = "<vqa_single>" # <<<<< PHẢI DÙNG PREFIX VQA >>>>>
         except FileNotFoundError:
             logger.warning(f"Image file not found for {item_id}: {data['path']}. Skipping.")
             continue
@@ -146,7 +138,6 @@ for item_id, data in sample_data.items():
         logger.warning(f"Unknown data type '{data_type}' for item {item_id}. Skipping.")
         continue
 
-    # Xử lý text input (thêm prefix nếu cần, hoặc tạo placeholder nếu chỉ có ảnh)
     if text_input is None and image_input is not None:
         final_text_input = "<image>" # Placeholder cho processor khi chỉ có ảnh
     elif text_input is not None and prefix_to_use:
@@ -159,11 +150,10 @@ for item_id, data in sample_data.items():
     batch_ids_to_encode.append(item_id)
     metadata_database[item_id] = data # Lưu metadata gốc
 
-# Thực hiện embedding theo batch (nếu có dữ liệu)
+# Thực hiện embedding theo batch
 if batch_ids_to_encode:
     logger.info(f"Encoding {len(batch_ids_to_encode)} items in batches...")
     try:
-        # Gọi hàm encode đã tích hợp xử lý batch
         all_embeddings = embedder.encode(
             text=batch_texts_to_encode,
             images=batch_images_to_encode,
@@ -183,8 +173,6 @@ if batch_ids_to_encode:
         logger.error(traceback.format_exc())
 
 # --- Phần 3: Truy vấn và So sánh ---
-
-logger.info("\n--- Part 3: Querying and Comparisons ---")
 
 # -- Chuẩn bị DB cho tìm kiếm --
 db_ids = list(vector_database.keys())
@@ -234,6 +222,7 @@ def search_db(query_embedding_np, top_k=3):
 try:
     query_text_normal = "Tìm điều khoản bảo mật"
     logger.info(f"\nQuerying DB with text: '{query_text_normal}' (No prefix)...")
+    
     # KHÔNG dùng prefix
     query_text_embedding = embedder.encode(text=query_text_normal).cpu().numpy()
     results_text = search_db(query_text_embedding)
@@ -251,6 +240,7 @@ try:
     query_image_path = "sample_images/query_car.jpg" # !!! THAY ĐƯỜNG DẪN !!!
     query_image = Image.open(query_image_path).convert("RGB")
     logger.info(f"\nQuerying DB with image: '{query_image_path}' (No prefix)...")
+    
     # KHÔNG dùng prefix
     query_image_embedding = embedder.encode(images=query_image).cpu().numpy()
     results_image = search_db(query_image_embedding)
@@ -271,6 +261,7 @@ try:
     query_img_desc = Image.open(query_img_desc_path).convert("RGB")
     query_desc = "Tìm các hóa đơn tương tự về bố cục"
     logger.info(f"\nQuerying DB with image+description: '{query_img_desc_path}' + '{query_desc}' (No prefix)...")
+    
     # KHÔNG dùng prefix
     query_img_desc_embedding = embedder.encode(text=query_desc, images=query_img_desc).cpu().numpy()
     results_img_desc = search_db(query_img_desc_embedding)
@@ -291,12 +282,13 @@ try:
     query_img_task_path = "sample_images/license_plate.jpg" # !!! THAY ĐƯỜNG DẪN !!!
     query_img_task = Image.open(query_img_task_path).convert("RGB")
     query_task_text = "Biển số xe này là gì?"
-    query_prefix = "<ocr>" # <<<<< QUAN TRỌNG: DÙNG PREFIX PHÙ HỢP >>>>>
+    
+    query_prefix = "<ocr>" # <<<<< QUAN TRỌNG: PHẢI DÙNG PREFIX PHÙ HỢP >>>>>
+    
     logger.info(f"\nQuerying DB with image+task: '{query_img_task_path}' + '{query_prefix} {query_task_text}' (Using prefix)...")
     query_img_task_embedding = embedder.encode(text=f"{query_prefix} {query_task_text}", images=query_img_task).cpu().numpy()
     results_img_task = search_db(query_img_task_embedding)
     print("Image+Task (OCR/VQA) Query Results:")
-    # Kết quả này sẽ khớp tốt nhất với các mục được embed bằng prefix tương ứng
     if results_img_task:
         for res in results_img_task:
             print(f"  - ID: {res['id']}, Score: {res['score']:.4f}, Type: {res['metadata'].get('type')}, Question: {res['metadata'].get('question')}")
@@ -308,10 +300,11 @@ except Exception as e:
     logging.error(f"Error during image+task query: {e}")
 
 # 3e) So sánh trực tiếp 2 danh sách (Arrays) Ảnh hoặc Text
+    
 try:
     # Ví dụ so sánh danh sách ảnh
-    image_paths_array1 = ["sample_images/cat1.jpg", "sample_images/dog1.jpg"] # !!! THAY ĐƯỜNG DẪN !!!
-    image_paths_array2 = ["sample_images/cat2.jpg", "sample_images/car1.jpg"] # !!! THAY ĐƯỜNG DẪN !!!
+    image_paths_array1 = ["sample_images/cat1.jpg", "sample_images/dog1.jpg"]
+    image_paths_array2 = ["sample_images/cat2.jpg", "sample_images/car1.jpg"]
     images1 = [Image.open(p).convert("RGB") for p in image_paths_array1]
     images2 = [Image.open(p).convert("RGB") for p in image_paths_array2]
     logging.info(f"\nComparing two arrays of images (No prefix)...")
@@ -329,10 +322,12 @@ try:
     texts_array1 = ["Quả táo màu đỏ.", "Bầu trời trong xanh."]
     texts_array2 = ["Trái cây có màu đỏ.", "Màu xanh của bầu trời."]
     logging.info(f"\nComparing two arrays of texts (No prefix)...")
+    
     # KHÔNG dùng prefix
     embeddings_array1_txt = embedder.encode(text=texts_array1, batch_size=INFERENCE_BATCH_SIZE).cpu().numpy()
     embeddings_array2_txt = embedder.encode(text=texts_array2, batch_size=INFERENCE_BATCH_SIZE).cpu().numpy()
     similarity_matrix_txt = cosine_similarity(embeddings_array1_txt, embeddings_array2_txt)
+    
     print("Text Array Comparison Matrix (Array1 vs Array2):")
     print(np.round(similarity_matrix_txt, 4))
 
@@ -340,6 +335,4 @@ except FileNotFoundError:
     logging.warning("One or more image files not found for array comparison. Skipping.")
 except Exception as e:
     logging.error(f"Error during array comparison: {e}")
-
-logger.info("\n--- Full Example Execution Finished ---")
 ```
