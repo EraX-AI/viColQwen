@@ -40,7 +40,7 @@ Các embedding cuối cùng được trích xuất bằng phương pháp **pooli
 
 ---
 
-## Παράδειγμα Huấn luyện
+## Huấn luyện
 
 Sự mạnh mẽ và linh hoạt của viPyloQwen bắt nguồn từ sự kết hợp cộng hưởng giữa chiến lược tối ưu hóa độc đáo và dữ liệu huấn luyện cực kỳ đa dạng:
 
