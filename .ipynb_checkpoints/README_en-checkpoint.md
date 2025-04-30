@@ -12,7 +12,7 @@
 
 Modern multimodal systems often face challenges due to the complexity of managing separate embedding spaces for diverse data types (e.g., text, images). This can lead to representational fragmentation, cumbersome retrieval pipelines, and limitations in cross-modal reasoning. 
 
-We introduce **viPyloQwen**, an advanced multimodal embedding model designed to generate **high-dimensional, unified representations** for images, text, and their arbitrary combinations within a single, cohesive vector space. 
+We introduce **viPyloQwen**, an advanced multimodal embedding model designed to generate **high-dimensional, unified representations** for images, text, and their arbitrary combinations within a single, cohesive vector space. We called it Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization.
 
 This research, including the development and training of the viPyloQwen model, was conducted with close collaboration from **the AI technology team at Gtel Mobile JSC (GMobile)**. Their technical expertise and collaborative support were crucial throughout the research process and model training.
 
