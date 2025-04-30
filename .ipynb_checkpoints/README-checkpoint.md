@@ -44,7 +44,7 @@ viPyloQwen's robustness and versatility stem from the synergistic combination of
         *   Chart and diagram analysis.
         *   Handwriting recognition (e.g., invoices, insurance claims forms, accident reports).
         *   Recognition of common Vietnamese documents (e.g., National ID cards - CCCD, driver's licenses).
-    *   **Complex Multi-Image VQA (`<vqa_single>`, `<vqa_multi>`, ~2.5M):** These tasks, single and multi-turnsVQA, also using 1-5 images, demand deeper visual reasoning integrated with textual queries. The data spans:
+    *   **Complex Multi-Image VQA (`<vqa_single>`, `<vqa_multi>`, ~2.5M):** These tasks, single and multi-turns VQA, also using 1-5 images, demand deeper visual reasoning integrated with textual queries. The data spans:
         *   General visual question answering across various scenes.
         *   Complex table and chart interpretation requiring reasoning.
         *   **Specialized Medical Imaging Analysis (~0.5M samples):** A significant subset dedicated to radiology OCR and VQA. This involves analyzing diverse medical scans (dermatology images, X-rays, CT, MRI) for diagnostic question answering related to critical health areas including skin, bone, heart, lung, brain, and dental conditions.
