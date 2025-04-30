@@ -55,7 +55,7 @@ Kết quả là các embedding 1024 chiều tạo điều kiện cho các ứng 
 
 Hãy phân tích vai trò riêng biệt của từng thành phần:
 
-*   **Attention Pooling**: Tập trung vào việc trích xuất thông tin từ chuỗi hidden states của encoder. Nó học cách tóm tắt chuỗi đầu ra một cách thông minh thành một vector 1D duy nhất (c) bằng cách nhấn mạnh các đặc trưng quan trọng. Nó cải thiện chất lượng của vector tóm tắt trước khi nó được dùng cho các tính toán loss. Tuy nhiên, bản thân Attention Pooling không biết dữ liệu đầu vào thuộc loại nhiệm vụ nào (text similarity, OCR, VQA...).
+*   **Attention Pooling**: Tập trung vào việc trích xuất thông tin từ chuỗi hidden states của encoder. Nó học cách tóm tắt chuỗi đầu ra một cách thông minh thành một vector 1D duy nhất bằng cách nhấn mạnh các đặc trưng quan trọng. Nó cải thiện chất lượng của vector tóm tắt trước khi nó được dùng cho các tính toán loss. Tuy nhiên, bản thân Attention Pooling không biết dữ liệu đầu vào thuộc loại nhiệm vụ nào (text similarity, OCR, VQA...).
 *   **Dynamic Losses**: Tập trung vào việc định hình không gian embedding. Mỗi hàm loss (InfoNCE, Triplet, MSE, Cosine) áp đặt một "áp lực tối ưu" (optimization pressure) khác nhau, hướng dẫn mô hình sắp xếp các embedding sao cho phù hợp với bản chất của từng nhiệm vụ (ví dụ: đẩy xa hard negative trong Triplet, khớp điểm similarity trong MSE). Nó quyết định cách các embedding được so sánh và tối ưu.
 *   **Prefix Tokens**: Đóng vai trò như một tín hiệu rõ ràng (explicit signal) để kết nối giữa dữ liệu đầu vào và hàm loss phù hợp trong cơ chế Dynamic Losses. Nó "báo" cho hệ thống biết: "Dữ liệu này thuộc loại OCR, hãy dùng loss function X".
 
