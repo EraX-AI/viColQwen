@@ -1,5 +1,5 @@
 <p align="left">
-  <img src="https://cdn-uploads.huggingface.co/production/uploads/63d8d8879dfcfa941d4d7cd9/GsQKdaTyn2FFx_cZvVHk3.png" alt="Logo">
+  <img src="https://huggingface.co/erax-ai/EraX-Translator-V1.0/resolve/main/erax-gmobile.png?download=true" alt="Logo">
 </p>
 
 # viPyloQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization
@@ -10,7 +10,11 @@
 
 ## Abstract
 
-Modern multimodal systems often face challenges due to the complexity of managing separate embedding spaces for diverse data types (e.g., text, images). This can lead to representational fragmentation, cumbersome retrieval pipelines, and limitations in cross-modal reasoning. We introduce **viPyloQwen**, an advanced multimodal embedding model designed to generate **high-dimensional, unified representations** for images, text, and their arbitrary combinations within a single, cohesive vector space.
+Modern multimodal systems often face challenges due to the complexity of managing separate embedding spaces for diverse data types (e.g., text, images). This can lead to representational fragmentation, cumbersome retrieval pipelines, and limitations in cross-modal reasoning. 
+
+We introduce **viPyloQwen**, an advanced multimodal embedding model designed to generate **high-dimensional, unified representations** for images, text, and their arbitrary combinations within a single, cohesive vector space. 
+
+This research, including the development and training of the viPyloQwen model, was conducted with close collaboration from **the AI technology team at Gtel Mobile JSC (GMobile)**. Their technical expertise and collaborative support were crucial throughout the research process and model training.
 
 Built upon the powerful **Qwen2-VL 2B** vision-language architecture, viPyloQwen employs a sophisticated contrastive learning framework. While inspired by approaches like ColPali, viPyloQwen introduces significant enhancements, particularly through its unique training methodology. The model is trained on a **large-scale, exceptionally diverse dataset exceeding 11 million samples**. This meticulously curated dataset strategically integrates challenging text-text semantic similarity pairs (with continuous scores), complex instruction-following data, and perhaps most distinctively, a vast collection of multi-image Optical Character Recognition (OCR) and Visual Question Answering (VQA) scenarios.
 
@@ -155,7 +159,7 @@ Please cite this repository URL until a formal publication is available.
 
 ```bibtex
 @misc{viPyloQwen_github_2024,
-  author       = {Steve Nguyen Anh Nguyen},
+  author       = {Steve Nguyen Anh Nguyen Erax GMobile},
   title        = {viPyloQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization},
   year         = {2024},
   publisher    = {GitHub},
