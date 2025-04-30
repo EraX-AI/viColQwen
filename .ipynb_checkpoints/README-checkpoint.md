@@ -151,7 +151,7 @@ logger.info(f"Attempting to load model from: {MODEL_PATH}")
 # -- Load Model và Processor --
 try:
     # Import lớp model từ file đã cập nhật
-    from model import ColPaLiQwenEmbedder as viPyloQwenEmbedder # Đổi tên khi import cho rõ
+    from model import ViPolyQwenEmbedder as viPyloQwenEmbedder # Đổi tên khi import cho rõ
     logger.info(f"Imported viPyloQwenEmbedder from model.py")
 
     # Load processor từ cùng đường dẫn model (quan trọng)
@@ -499,7 +499,7 @@ Vui lòng trích dẫn URL của kho lưu trữ này cho đến khi có ấn ph�
   howpublished = {\url{https://github.com/EraX-AI/viPyloQwen}}
 }
 
-@misc{faysse2024colpali,
+@misc{faysse2024ColPali,
       title={ColPali: Efficient Document Retrieval with Vision Language Models},
       author={Manuel Faysse and Hugues Sibille and Tony Wu and Bilel Omrani and Gautier Viaud and Céline Hudelot and Pierre Colombo},
       year={2024},

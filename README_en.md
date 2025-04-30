@@ -145,14 +145,14 @@ INFERENCE_BATCH_SIZE = 16
 # Độ dài sequence tối đa (nếu cần override processor default)
 MAX_LENGTH = None # Để None sẽ dùng processor default
 
-logger.info(f"Starting viPyloQwen Usage Script on device: {DEVICE}")
+logger.info(f"Starting ViPyloQwen Usage Script on device: {DEVICE}")
 logger.info(f"Attempting to load model from: {MODEL_PATH}")
 
 # -- Load Model và Processor --
 try:
     # Import lớp model từ file đã cập nhật
-    from model import ColPaLiQwenEmbedder as viPyloQwenEmbedder # Đổi tên khi import cho rõ
-    logger.info(f"Imported viPyloQwenEmbedder from model.py")
+    from model import ViPolyQwenEmbedder as ViPyloQwenEmbedder # Đổi tên khi import cho rõ
+    logger.info(f"Imported ViPyloQwenEmbedder from model.py")
 
     # Load processor từ cùng đường dẫn model (quan trọng)
     processor = AutoProcessor.from_pretrained(MODEL_PATH, trust_remote_code=True)
