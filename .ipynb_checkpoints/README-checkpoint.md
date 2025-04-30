@@ -73,8 +73,8 @@ Sự kết hợp giữa tập dữ liệu phong phú, đa dạng về lĩnh vự
 
 Việc huấn luyện mô hình `viPyloQwen` đòi hỏi yêu cầu tài nguyên tính toán lớn, nhấn mạnh sự phức tạp của việc học từ một tập dữ liệu đa phương thức lớn và đa dạng như vậy.
 
-*   **Phần cứng:** Mô hình được huấn luyện trên một cụm máy tính hiệu năng cao bao gồm **4x GPU NVIDIA H100**, mỗi GPU có 94GB VRAM được kết nối qua NVLink.
-*   **Thời gian:** Giai đoạn huấn luyện chính kéo dài khoảng **một tháng** tính toán liên tục trên cấu hình phần cứng này.
+*   **Phần cứng:** Mô hình được huấn luyện trên một cụm máy tính hiệu năng cao bao gồm **4x GPU NVIDIA H100 trên Vast.AI**, mỗi GPU có 94GB VRAM được kết nối qua NVLink.
+*   **Thời gian:** Giai đoạn huấn luyện chính kéo dài khoảng **15 ngày** tính toán liên tục trên cấu hình phần cứng này.
 *   **Framework:** Quá trình huấn luyện phân tán được điều phối sử dụng thư viện **`accelerate` của Hugging Face**, khai thác khả năng mở rộng đa GPU hiệu quả của nó (có khả năng được cấu hình với DeepSpeed ZeRO stage 3 hoặc FSDP, theo tệp cấu hình `qwen2VL2B.yaml`).
 *   **Độ chính xác & Tối ưu hóa:** Quá trình huấn luyện sử dụng độ chính xác hỗn hợp **`bfloat16`** để tối ưu hóa việc sử dụng bộ nhớ và thông lượng tính toán. **Flash Attention 2** đã được kích hoạt nhằm tăng cường hiệu quả cho cơ chế attention.
 *   **Các siêu tham số chính (Key Hyperparameters):**
