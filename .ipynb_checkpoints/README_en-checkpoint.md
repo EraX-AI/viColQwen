@@ -171,6 +171,7 @@ The training of the `viPolyQwen` model involved a significant computational effo
 
 *   Actively under development. Model checkpoints, evaluation code, benchmarks, and comprehensive usage examples will be released soon.
 *   Ongoing work includes extensive benchmarking across Vietnamese, English, and cross-lingual tasks, ablation studies on data components, exploring larger base models, and potential integration of further modalities.
+*   Later models may include audio or even video to ensure that viPoly is a truly unique model for multimedia smart data retrieval tasks.
 
 ---
 

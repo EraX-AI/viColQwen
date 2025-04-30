@@ -12,7 +12,7 @@
 
 Các hệ thống đa phương thức hiện đại thường đối mặt với thách thức do sự phức tạp của việc quản lý các không gian embedding riêng biệt cho nhiều loại dữ liệu khác nhau (ví dụ: văn bản, hình ảnh). Điều này có thể dẫn đến sự phân mảnh trong biểu diễn, quy trình truy xuất cồng kềnh và hạn chế trong khả năng suy luận chéo phương thức.
 
-Chúng tôi giới thiệu **viPolyQwen**, một mô hình embedding đa phương thức tiên tiến, được thiết kế để tạo ra các **biểu diễn thống nhất, chiều cao** cho hình ảnh, văn bản và các kết hợp tùy ý của chúng trong một không gian vector duy nhất, gắn kết. Tên gọi của mô hình phản ánh phương pháp cốt lõi: **Embedding Đa phương thức Thống nhất qua Tối ưu Loss Linh hoạt theo Tín hiệu Tiền tố (Prefix-Guided Dynamic Loss Optimization)**, xây dựng trên kiến trúc **Qwen 2 Visual Language**.
+Chúng tôi giới thiệu **viPolyQwen**, một mô hình embedding đa phương thức tiên tiến, được thiết kế để tạo ra các **biểu diễn (embedding) thống nhất trong không gian đa chiều** cho hình ảnh, văn bản và các kết hợp tùy ý của chúng trong một không gian vector duy nhất, gắn kết. Tên gọi của mô hình phản ánh phương pháp cốt lõi: **Embedding Đa phương thức Thống nhất qua Tối ưu Loss Linh hoạt theo Tín hiệu Tiền tố (Prefix-Guided Dynamic Loss Optimization) sử dụng Attention Pooling**, xây dựng trên kiến trúc **Qwen 2 Visual Language**.
 
 Nghiên cứu này, bao gồm việc phát triển và huấn luyện mô hình viPolyQwen, được thực hiện với sự hợp tác chặt chẽ của **đội ngũ công nghệ AI tại Công ty Cổ phần Viễn thông Di động Toàn Cầu Gtel Mobile JSC (GMobile)**. Chuyên môn kỹ thuật và sự hỗ trợ hợp tác của họ đóng vai trò vô cùng quan trọng trong suốt quá trình nghiên cứu và đào tạo mô hình.
 
@@ -163,6 +163,7 @@ Việc huấn luyện mô hình `viPolyQwen` đòi hỏi yêu cầu tài nguyên
 
 *   Đang được phát triển tích cực. Các điểm kiểm tra (checkpoints) mô hình, mã đánh giá, benchmarks và ví dụ sử dụng toàn diện sẽ sớm được phát hành.
 *   Công việc đang diễn ra bao gồm benchmarking sâu rộng trên các tác vụ tiếng Việt, tiếng Anh và chéo ngôn ngữ, các nghiên cứu cắt lớp (ablation studies) về các thành phần dữ liệu, khám phá các mô hình cơ sở lớn hơn và tích hợp tiềm năng các phương thức khác.
+*   Các mô hình sau này có thể có thêm cả âm thanh hoặc thậm chí video đê bảo đảm viPoly** sẽ là 1 mô hình thật sự duy nhất cho nhiệm vụ truy xuất dữ liệu thông minh đa phương tiện
 
 ---
 
