@@ -1,3 +1,5 @@
+# Phần 1: Cấu hình và Khởi tạo
+
 ```python
 import torch
 from PIL import Image
@@ -8,11 +10,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from tqdm.auto import tqdm # Sử dụng tqdm.auto cho linh hoạt
 import time # Thêm time để đo thời gian nếu cần
-```
 
-# Phần 1: Cấu hình và Khởi tạo
-
-```python
 # -- Cấu hình Logging --
 logging.basicConfig(
     level=logging.INFO,
