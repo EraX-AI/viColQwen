@@ -4,7 +4,13 @@
 
 ## Abstract
 
-Modern multimodal systems often struggle with the complexity of managing separate embedding spaces for different data types (e.g., text, images), leading to representational fragmentation, intricate retrieval pipelines, and suboptimal cross-modal reasoning. We introduce **viOmniQwen**, an advanced multimodal embedding model engineered to generate **high-dimensional, unified representations** for images, texts, and their arbitrary combinations within a single vector space. Built upon the powerful **Qwen2-VL 2B** vision-language architecture, viOmniQwen employs a sophisticated contrastive learning paradigm, inspired by ColPali but significantly enhanced. The model is trained on a **large-scale, heterogeneous dataset exceeding 11 million samples**, strategically integrating challenging text-text semantic similarity pairs (with continuous scores), complex instruction-following data, multi-image Optical Character Recognition (OCR) tasks, and multi-image Visual Question Answering (VQA) scenarios. The core innovation lies in its **prefix-guided dynamic mixed-loss optimization strategy**. Task-specific prefixes (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) are prepended to the input, signaling the data type and **dynamically triggering a corresponding, tailored loss function** (including InfoNCE, Triplet Loss, MSE, and direct cosine similarity maximization) for each sample. Final embeddings are extracted using **mean pooling** over the encoder's output tokens, capturing comprehensive semantic and visual information. The resulting 1024-dimensional embeddings exhibit nuanced semantic and visual understanding, significantly simplifying and enhancing downstream applications such as multimodal Retrieval-Augmented Generation (RAG), Graph RAG, cross-modal search, and complex document analysis, particularly within the Vietnamese language context, although it can certainly zero-shot for major languages likes English, Chinese and the likes. 
+Modern multimodal systems often face challenges due to the complexity of managing separate embedding spaces for diverse data types (e.g., text, images). This can lead to representational fragmentation, cumbersome retrieval pipelines, and limitations in cross-modal reasoning. We introduce **viOmniQwen**, an advanced multimodal embedding model designed to generate **high-dimensional, unified representations** for images, text, and their arbitrary combinations within a single, cohesive vector space.
+
+Built upon the powerful **Qwen2-VL 2B** vision-language architecture, viOmniQwen employs a sophisticated contrastive learning framework. While inspired by approaches like ColPali, viOmniQwen introduces significant enhancements, particularly through its unique training methodology. The model is trained on a **large-scale, exceptionally diverse dataset exceeding 11 million samples**. This meticulously curated dataset strategically integrates challenging text-text semantic similarity pairs (with continuous scores), complex instruction-following data, and perhaps most distinctively, a vast collection of multi-image Optical Character Recognition (OCR) and Visual Question Answering (VQA) scenarios.
+
+The core algorithmic innovation lies in viOmniQwen's **prefix-guided dynamic mixed-loss optimization strategy**. Task-specific prefixes (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) are prepended to the input, serving as cues to signal the data type. This mechanism **dynamically triggers a corresponding, tailored loss function** (including InfoNCE, Triplet Loss, MSE, and direct cosine similarity maximization) specifically designed for each sample type.
+
+Final embeddings are extracted using **mean pooling** over the encoder's output tokens, ensuring comprehensive capture of semantic and visual information. The resulting 1024-dimensional embeddings, derived from this rich data mixture and unique training strategy, exhibit nuanced semantic and visual understanding. This significantly simplifies and enhances downstream applications such as multimodal Retrieval-Augmented Generation (RAG), Graph RAG, cross-modal search, and complex document analysis. While demonstrating particularly strong performance in **Vietnamese** due to data focus, the model's multilingual training data (including substantial English and Chinese) facilitates effective zero-shot transfer capabilities to other languages.
 
 ---
 
@@ -26,39 +32,46 @@ Modern multimodal systems often struggle with the complexity of managing separat
 
 ## Training Paradigm
 
-viOmniQwen's robustness stems from its diverse data mixture and unique optimization strategy:
+viOmniQwen's robustness and versatility stem from the synergistic combination of its unique optimization strategy and its exceptionally diverse training data:
 
-1.  **Heterogeneous Dataset (Over 11 Million Samples):** Integrates four primary data types linked to the prefixes above:
-    *   **Text-Text Semantic Similarity (`<text_pair>`, ~5.6M):** Pairs $(t_a, t_b)$ with similarity scores $s \in [0, 1]$.
-    *   **Instruction Following (`<instr>`, ~0.6M):** Pairs (instruction $i$, response $r$).
-    *   **Multi-Image OCR/OCQ (`<ocr>`, ~2.5M):** Triples $(\{\text{image(s)}\}_q, \text{query } q, \text{answer } a)$.
-    *   **Multi-Image VQA (`<vqa_single>`, `<vqa_multi>`, ~2.5M):** Triples $(\{\text{image(s)}\}_q, \text{question } q, \text{answer } a)$.
-    The dataset has a primary focus on Vietnamese (vi), with substantial English (en) and Chinese (zh) coverage.
+1.  **Heterogeneous and Rich Dataset (Over 11 Million Samples):** The training corpus integrates multiple data modalities and task types, linked via the input prefixes:
+    *   **Text-Text Semantic Similarity (`<text_pair>`, ~5.6M):** Pairs $(t_a, t_b)$ with similarity scores $s \in [0, 1]$, fostering nuanced textual understanding.
+    *   **Instruction Following (`<instr>`, ~0.6M):** Pairs (instruction $i$, response $r$), enhancing contextual reasoning and task execution representation.
+    *   **Diverse Multi-Image OCR/OCQ (`<ocr>`, ~2.5M):** This category goes far beyond simple document text. It includes a wide spectrum of visual text recognition tasks on 1-5 images per sample, such as:
+        *   Street scene captioning and text recognition.
+        *   Mathematical document understanding (formulas, diagrams).
+        *   Text and image interplay in general documents.
+        *   Chart and diagram analysis.
+        *   Handwriting recognition (e.g., invoices, insurance claims forms, accident reports).
+        *   Recognition of common Vietnamese documents (e.g., National ID cards - CCCD, driver's licenses).
+    *   **Complex Multi-Image VQA (`<vqa_single>`, `<vqa_multi>`, ~2.5M):** These tasks, also using 1-5 images, demand deeper visual reasoning integrated with textual queries. The data spans:
+        *   General visual question answering across various scenes.
+        *   Complex table and chart interpretation requiring reasoning.
+        *   **Specialized Medical Imaging Analysis (~0.5M samples):** A significant subset dedicated to radiology OCR and VQA. This involves analyzing diverse medical scans (dermatology images, X-rays, CT, MRI) for diagnostic question answering related to critical health areas including skin, bone, heart, lung, brain, and dental conditions.
+    *   **Language Distribution:** While the dataset predominantly features **Vietnamese** content to ensure strong performance in this context, it strategically incorporates substantial **English** and **Chinese** samples across all categories. This multilingual foundation is crucial for enabling the model's effective **zero-shot generalization** to other unseen languages.
 
 2.  **Prefix-Guided Dynamic Mixed-Loss Optimization:**
-    *   Each sample in a batch is identified by its corresponding task prefix.
-    *   Based on the detected prefix, a specific loss function ($\mathcal{L}_{\text{prefix}}$) from a pre-defined suite is **dynamically selected and applied** to the embedding pair $(e_a, e_b)$ computed for that sample.
-    *   The total batch loss ($\mathcal{L}_{\text{batch}}$) is the average of these individually computed losses across all samples in the batch.
-    *   **Loss Function Suite:**
-        *   **For `<text_pair>`:** Combines Symmetric InfoNCE loss with Mean Squared Error (MSE) Similarity Regression (aligning predicted similarity with ground-truth scores).
-        *   **For `<instr>`:** Combines Symmetric InfoNCE loss with Direct Cosine Similarity Maximization (encouraging high similarity between instruction and response embeddings).
-        *   **For `<ocr>`, `<vqa_single>`, `<vqa_multi>`:** Combines Symmetric InfoNCE loss with Triplet Margin Loss (enforcing a margin between positive pairs and the hardest negative pairs within the batch, with potentially adjusted margin for multi-turn VQA).
+    *   As described previously, each sample's prefix dynamically selects a tailored loss function from a pre-defined suite.
+    *   **Loss Function Suite Applied:**
+        *   `<text_pair>`: Symmetric InfoNCE + MSE Similarity Regression.
+        *   `<instr>`: Symmetric InfoNCE + Direct Cosine Similarity Maximization.
+        *   `<ocr>`, `<vqa_single>`, `<vqa_multi>`: Symmetric InfoNCE + Triplet Margin Loss (margin potentially adjusted for multi-turn).
 
-This dynamic, prefix-guided approach allows the model to effectively learn from diverse data structures within a single unified embedding space.
+This combination of a rich, domain-diverse dataset and an adaptive training mechanism allows viOmniQwen to develop a truly unified and highly capable embedding space applicable across a wide range of real-world scenarios.
 
 ---
 
 ## Key Features & Advantages
 
-*   ✅ **Unified Multimodal Embedding:** Single vector space for text, image(s), and combinations.
-*   ✅ **Prefix-Guided Training:** Enables specialized handling of different data types (similarity, instructions, OCR, VQA) via prefixes and tailored losses.
-*   ✅ **Simplified Multimodal RAG/Search:** Streamlines querying a single vector index with diverse inputs.
-*   ✅ **Enhanced Cross-Modal Understanding:** Joint training on diverse tasks fosters deep visual-textual correlations.
-*   ✅ **High-Dimensional Nuance:** 1024-d embeddings capture fine-grained details.
-*   ✅ **Multi-Image Aware:** Natively encodes context from multiple input images.
-*   ✅ **Robust Performance:** Diverse training data and loss functions yield versatile embeddings.
-*   ✅ **Strong Vietnamese & Multilingual Focus:** Optimized for Vietnamese with significant en/zh capabilities.
-*   ✅ **Foundation for Advanced AI:** Ideal for next-generation multimodal systems.
+*   ✅ **Unified Multimodal Embedding:** A single, coherent vector space simplifies integration and downstream tasks.
+*   ✅ **Prefix-Guided Training:** Enables nuanced, task-aware learning within the unified space.
+*   ✅ **Exceptional Data Diversity:** Training on text similarity, instructions, complex OCR (handwriting, forms, diagrams, medical), and deep VQA (reasoning, charts, specialized radiology) ensures robustness and broad applicability.
+*   ✅ **Simplified Multimodal RAG/Search:** Allows querying a single index with text, image, or mixed queries to retrieve relevant multimodal information.
+*   ✅ **Enhanced Cross-Modal Understanding:** Joint training fosters embeddings sensitive to fine-grained visual-textual correlations.
+*   ✅ **High-Dimensional Nuance:** 1024-d captures detailed information crucial for complex tasks.
+*   ✅ **Multi-Image Aware:** Natively processes inputs containing multiple images.
+*   ✅ **Strong Vietnamese & Zero-Shot Capabilities:** Optimized for Vietnamese with proven cross-lingual generalization potential due to multilingual data inclusion.
+*   ✅ **Foundation for Advanced AI:** An ideal building block for sophisticated multimodal RAG, Graph RAG, semantic search, classification, and analysis systems.
 
 ---
 
@@ -72,12 +85,10 @@ from PIL import Image
 
 # embedder = viOmniQwenEmbedder(checkpoint_path="./path/to/viOmniQwen/", device="cuda")
 
-# --- Example: VQA Single Turn ---
-# Note: The embedder's encode method should handle prefix internally,
-# or you might need to prepend it manually if using the base model directly.
+# --- Example: VQA Single Turn (e.g., Medical Image) ---
 prefix_vqa = "<vqa_single>"
-text_input = "What color is the object on the left?"
-image_input = Image.open("image.jpg").convert("RGB")
+text_input = "Is there evidence of fracture in the distal radius?" # Example query
+image_input = Image.open("wrist_xray.png").convert("RGB") # Example image
 
 # Conceptual encoding call - the prefix guides the internal processing
 # mixed_embedding = embedder.encode(text=f"{prefix_vqa} {text_input}", images=[image_input])
@@ -85,8 +96,8 @@ image_input = Image.open("image.jpg").convert("RGB")
 
 # --- Example: Text Similarity ---
 prefix_sim = "<text_pair>"
-text_a = "The cat sat on the mat."
-text_b = "A feline rested upon the rug."
+text_a = "Patient reported mild discomfort."
+text_b = "Subject experienced slight pain."
 
 # Conceptual encoding calls
 # text_a_embedding = embedder.encode(text=f"{prefix_sim} {text_a}")
@@ -95,31 +106,40 @@ text_b = "A feline rested upon the rug."
 # Compute similarity (e.g., cosine)
 # similarity = torch.nn.functional.cosine_similarity(text_a_embedding, text_b_embedding)
 # print(similarity)
+
+# --- Example: OCR (e.g., Handwritten Form) ---
+prefix_ocr = "<ocr>"
+text_input = "What is the policy number listed?" # Example query
+image_input = Image.open("handwritten_claim_form.jpg").convert("RGB") # Example image
+
+# Conceptual encoding call
+# form_embedding = embedder.encode(text=f"{prefix_ocr} {text_input}", images=[image_input])
+# print(form_embedding.shape) # Expected: torch.Size([1, 1024])
 ```
 
 ---
 
 ## Potential Applications
 
-*   **Multimodal RAG:** Retrieve diverse multimodal context (text passages, images, tables within documents) using unified queries for richer LLM grounding.
-*   **Graph RAG:** Construct knowledge graphs with nodes representing text, images, or multimodal documents, navigable via unified embeddings.
-*   **Cross-Modal Retrieval:** Robustly find images from text queries, text from image queries, or similar multimodal items within a single index.
-*   **Document Intelligence:** Analyze complex documents (e.g., reports, invoices) by capturing visual layout and textual content in one representation.
-*   **Contextual Visual Search:** Enhance image search results by incorporating accompanying textual context during embedding.
+*   **Multimodal RAG:** Retrieve highly relevant text passages, images, tables, or document sections (including medical reports or financial statements) using unified queries.
+*   **Graph RAG:** Build knowledge graphs where nodes represent diverse entities (patients, documents, procedures, visual findings) linked via unified embeddings.
+*   **Cross-Modal Retrieval:** Efficiently search for medical images based on textual descriptions, find relevant documents from images of forms, etc.
+*   **Document Intelligence:** Deep analysis of complex documents like insurance claims, scientific papers, or technical manuals, leveraging both visual layout and content.
+*   **Contextual Visual Search:** Find visually similar images (e.g., medical scans, product photos) refined by specific textual context.
 
 ---
 
 ## Development Status & Future Work
 
-*   Under active development. Model checkpoints, evaluation code, benchmarks, and detailed usage examples will be released soon.
-*   Ongoing work includes comprehensive benchmarking (Vietnamese, English, cross-lingual tasks), exploring larger base models, and potential integration of other modalities.
+*   Actively under development. Model checkpoints, evaluation code, benchmarks, and comprehensive usage examples will be released soon.
+*   Ongoing work includes extensive benchmarking across Vietnamese, English, and cross-lingual tasks, ablation studies on data components, exploring larger base models, and potential integration of further modalities.
 
 ---
 
 ## License
 
 *   Licensing details will be announced upon release.
-*   A commercial license option will be available. For inquiries, please contact: **nguyen@hatto.com**.
+*   A commercial license option will be available. For inquiries regarding commercial use, please contact: **nguyen@hatto.com**.
 
 ---
 
