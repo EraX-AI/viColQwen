@@ -16,13 +16,7 @@ header-includes:
   - \usepackage{caption}
   - \captionsetup{font=small}
 ---
-# viPolyQwen: Synergizing Prefix-Guided Dynamic Loss Optimization and Attention Pooling for Unified Multimodal Embeddings
-
-**Nguyen Anh Nguyen\***, **EraX AI Team**, **AI Technology Team, Gtel Mobile JSC (GMobile)**
-
-\*Corresponding Author: nguyen@hatto.com
-
-**(Draft - Illustrative Results - Empirical Validation Required)**
+*(Draft - Illustrative Results - Empirical Validation Required)*
 
 ## Abstract
 
