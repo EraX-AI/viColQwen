@@ -2,9 +2,9 @@
   <img src="https://huggingface.co/erax-ai/EraX-Translator-V1.0/resolve/main/erax-gmobile.png?download=true" alt="Logo" width="400">
 </p>
 
-# viPolyQwen: Embedding Đa phương thức qua Tối ưu Loss Linh hoạt theo Tín hiệu Tiền tố với Attention Pooling
+# viPolyQwen: Embedding Đa phương thức với Tối ưu Loss Linh hoạt theo Tín hiệu Tiền tố với Attention Pooling
 
-[**English** (README_en.md)] | Tiếng Việt
+[English](README_en.md) | **Tiếng Việt**
 
 **(Mô hình sắp được phát hành - Vui lòng theo dõi!)**
 
