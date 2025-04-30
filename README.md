@@ -1,151 +1,154 @@
-# viPyloQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization
+# viPyloQwen: Embedding Đa phương thức Thống nhất qua Cơ chế Tối ưu Loss Động Dẫn hướng bằng Tiền tố
+(Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization)
 
-**(Model Release Pending - Stay Tuned!)**
+**(Mô hình sắp được phát hành - Vui lòng theo dõi!)**
 
-## Abstract
+[[English Version](README.en)] | **Tiếng Việt**
 
-Modern multimodal systems often face challenges due to the complexity of managing separate embedding spaces for diverse data types (e.g., text, images). This can lead to representational fragmentation, cumbersome retrieval pipelines, and limitations in cross-modal reasoning. We introduce **viPyloQwen**, an advanced multimodal embedding model designed to generate **high-dimensional, unified representations** for images, text, and their arbitrary combinations within a single, cohesive vector space.
+## Tóm tắt
 
-Built upon the powerful **Qwen2-VL 2B** vision-language architecture, viPyloQwen employs a sophisticated contrastive learning framework. While inspired by approaches like ColPali, viPyloQwen introduces significant enhancements, particularly through its unique training methodology. The model is trained on a **large-scale, exceptionally diverse dataset exceeding 11 million samples**. This meticulously curated dataset strategically integrates challenging text-text semantic similarity pairs (with continuous scores), complex instruction-following data, and perhaps most distinctively, a vast collection of multi-image Optical Character Recognition (OCR) and Visual Question Answering (VQA) scenarios.
+Các hệ thống đa phương thức hiện đại thường đối mặt với thách thức do sự phức tạp của việc quản lý các không gian embedding riêng biệt cho nhiều loại dữ liệu khác nhau (như văn bản, hình ảnh). Điều này có thể dẫn đến sự phân mảnh trong biểu diễn, quy trình truy xuất cồng kềnh và hạn chế trong khả năng suy luận chéo phương thức. Chúng tôi giới thiệu **viPyloQwen**, một mô hình embedding đa phương thức tiên tiến, được thiết kế để tạo ra các **biểu diễn thống nhất, chiều cao** cho hình ảnh, văn bản và các kết hợp tùy ý của chúng trong một không gian vector duy nhất, gắn kết.
 
-The core algorithmic innovation lies in viPyloQwen's **prefix-guided dynamic mixed-loss optimization strategy**. Task-specific prefixes (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) are prepended to the input, serving as cues to signal the data type. This mechanism **dynamically triggers a corresponding, tailored loss function** (including InfoNCE, Triplet Loss, MSE, and direct cosine similarity maximization) specifically designed for each sample type.
+Được xây dựng trên kiến trúc vision-language mạnh mẽ **Qwen2-VL 2B**, viPyloQwen sử dụng một framework học tương phản (contrastive learning) tinh vi. Mặc dù lấy cảm hứng từ các phương pháp như ColPali, viPyloQwen mang đến những cải tiến đáng kể, đặc biệt qua phương pháp huấn luyện độc đáo. Mô hình được huấn luyện trên một **tập dữ liệu quy mô lớn, cực kỳ đa dạng, vượt quá 11 triệu mẫu**. Tập dữ liệu được tuyển chọn tỉ mỉ này tích hợp một cách chiến lược các cặp tương đồng ngữ nghĩa văn bản-văn bản phức tạp (với điểm số liên tục), dữ liệu hướng dẫn phức tạp, và có lẽ đặc biệt nhất, một bộ sưu tập lớn các tình huống Nhận dạng Ký tự Quang học (OCR) và Trả lời Câu hỏi Trực quan (VQA) đa hình ảnh.
 
-Final embeddings are extracted using **mean pooling** over the encoder's output tokens, ensuring comprehensive capture of semantic and visual information. The resulting 1024-dimensional embeddings, derived from this rich data mixture and unique training strategy, exhibit nuanced semantic and visual understanding. This significantly simplifies and enhances downstream applications such as multimodal Retrieval-Augmented Generation (RAG), Graph RAG, cross-modal search, and complex document analysis. While demonstrating particularly strong performance in **Vietnamese** due to data focus, the model's multilingual training data (including substantial English and Chinese) facilitates effective zero-shot transfer capabilities to other languages.
+Đổi mới thuật toán cốt lõi nằm ở **chiến lược tối ưu hóa tổn thất hỗn hợp động được dẫn hướng bằng tiền tố** của viPyloQwen. Các tiền tố nhiệm vụ cụ thể (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) được thêm vào đầu vào, đóng vai trò như tín hiệu để báo hiệu loại dữ liệu. Cơ chế này **kích hoạt động một hàm loss tương ứng, được thiết kế riêng** (bao gồm InfoNCE, Triplet Loss, MSE, và tối đa hóa độ tương đồng cosine) đặc thù cho từng loại mẫu.
 
----
-
-## Model Details
-
-*   **Base Architecture:** `Qwen/Qwen2-VL-2B` - The foundational Vision-Language Model (VLM).
-*   **Embedding Strategy:** Unified Embedding Space via Prefix-Guided Dynamic Contrastive Learning.
-*   **Embedding Dimension:** `1024`.
-*   **Pooling Strategy:** **Mean Pooling**. The final embedding vector is obtained by averaging the hidden states of all output tokens from the final layer of the Qwen2-VL encoder, followed by L2 normalization. This aggregates information across the entire input sequence (text tokens and image patch tokens).
-*   **Input Representation:** Input data (text strings, PIL Images) is processed by the Qwen-VL processor. Images are represented by the `<image>` token. Crucially, a **task-specific prefix** is prepended to the main textual input to signal the data type:
-    *   `<text_pair>`: For text similarity pairs with continuous scores.
-    *   `<instr>`: For instruction-following data (instruction-response pairs).
-    *   `<ocr>`: For OCR/OCQ data (image(s)+query -> answer).
-    *   `<vqa_multi>`: For multi-turn VQA (image(s)+question -> answer).
-    *   `<vqa_single>`: For single-turn VQA (image(s)+question -> answer).
-*   **Output:** A single `1024-d` dense vector representing the semantic and/or visual content of the input.
+Các embedding cuối cùng được trích xuất bằng phương pháp **pooling trung bình (mean pooling)** trên các token đầu ra của bộ mã hóa, đảm bảo thu giữ toàn diện thông tin ngữ nghĩa và thị giác. Kết quả là các embedding 1024 chiều, được tạo ra từ hỗn hợp dữ liệu phong phú và chiến lược huấn luyện độc đáo này, thể hiện sự hiểu biết ngữ nghĩa và hình ảnh sâu sắc, tinh tế. Điều này giúp đơn giản hóa và nâng cao đáng kể các ứng dụng đầu cuối như Sinh Tăng cường Truy xuất (RAG) đa phương thức, Graph RAG, tìm kiếm chéo phương thức và phân tích tài liệu phức tạp. Mặc dù mô hình thể hiện hiệu suất đặc biệt mạnh mẽ bằng **tiếng Việt** do trọng tâm dữ liệu, dữ liệu huấn luyện đa ngôn ngữ (bao gồm lượng đáng kể tiếng Anh và tiếng Trung) tạo điều kiện cho khả năng **chuyển giao zero-shot** hiệu quả sang các ngôn ngữ khác.
 
 ---
 
-## Training Paradigm
+## Chi tiết Mô hình
 
-viPyloQwen's robustness and versatility stem from the synergistic combination of its unique optimization strategy and its exceptionally diverse training data:
-
-1.  **Heterogeneous and Rich Dataset (Over 11 Million Samples):** The training corpus integrates multiple data modalities and task types, linked via the input prefixes:
-    *   **Text-Text Semantic Similarity (`<text_pair>`, ~5.6M):** Pairs $(t_a, t_b)$ with similarity scores $s \in [0, 1]$, fostering nuanced textual understanding.
-    *   **Instruction Following (`<instr>`, ~0.6M):** Pairs (single and multi-turns instruction $i$, response $r$), enhancing contextual reasoning and task execution representation.
-    *   **Diverse Multi-Image OCR/OCQ (`<ocr>`, ~2.5M):** This category goes far beyond simple document text. It includes a wide spectrum of visual text recognition tasks on 1-5 images per sample, such as:
-        *   Street scene captioning and text recognition.
-        *   Mathematical document understanding (formulas, diagrams).
-        *   Text and image interplay in general documents.
-        *   Chart and diagram analysis.
-        *   Handwriting recognition (e.g., invoices, insurance claims forms, accident reports).
-        *   Recognition of common Vietnamese documents (e.g., National ID cards - CCCD, driver's licenses).
-    *   **Complex Multi-Image VQA (`<vqa_single>`, `<vqa_multi>`, ~2.5M):** These tasks, single and multi-turns VQA, also using 1-5 images, demand deeper visual reasoning integrated with textual queries. The data spans:
-        *   General visual question answering across various scenes.
-        *   Complex table and chart interpretation requiring reasoning.
-        *   **Specialized Medical Imaging Analysis (~0.5M samples):** A significant subset dedicated to radiology OCR and VQA. This involves analyzing diverse medical scans (dermatology images, X-rays, CT, MRI) for diagnostic question answering related to critical health areas including skin, bone, heart, lung, brain, and dental conditions.
-    *   **Language Distribution:** While the dataset predominantly features **Vietnamese** content to ensure strong performance in this context, it strategically incorporates substantial **English** and **Chinese** samples across all categories. This multilingual foundation is crucial for enabling the model's effective **zero-shot generalization** to other unseen languages.
-
-2.  **Prefix-Guided Dynamic Mixed-Loss Optimization:**
-    *   As described previously, each sample's prefix dynamically selects a tailored loss function from a pre-defined suite.
-    *   **Loss Function Suite Applied:**
-        *   `<text_pair>`: Symmetric InfoNCE + MSE Similarity Regression.
-        *   `<instr>`: Symmetric InfoNCE + Direct Cosine Similarity Maximization.
-        *   `<ocr>`, `<vqa_single>`, `<vqa_multi>`: Symmetric InfoNCE + Triplet Margin Loss (margin potentially adjusted for multi-turn).
-
-This combination of a rich, domain-diverse dataset and an adaptive training mechanism allows viPyloQwen to develop a truly unified and highly capable embedding space applicable across a wide range of real-world scenarios.
+*   **Kiến trúc Nền tảng:** `Qwen/Qwen2-VL-2B` - Mô hình Ngôn ngữ-Thị giác (VLM) làm nền tảng.
+*   **Chiến lược Embedding:** Không gian Embedding Thống nhất qua Học Tương phản Động được Dẫn hướng bằng Tiền tố.
+*   **Chiều Embedding:** `1024`.
+*   **Chiến lược Pooling:** **Pooling Trung bình (Mean Pooling)**. Vector embedding cuối cùng được lấy bằng cách tính trung bình các trạng thái ẩn của tất cả các token đầu ra từ lớp cuối cùng của bộ mã hóa Qwen2-VL, sau đó chuẩn hóa L2. Điều này tổng hợp thông tin trên toàn bộ chuỗi đầu vào (token văn bản và token patch hình ảnh).
+*   **Biểu diễn Đầu vào:** Dữ liệu đầu vào (chuỗi văn bản, ảnh PIL) được xử lý bởi bộ xử lý của Qwen-VL. Hình ảnh được biểu diễn bằng token `<image>`. Điểm quan trọng: một **tiền tố nhiệm vụ cụ thể** được thêm vào *trước* nội dung văn bản chính để báo hiệu loại dữ liệu:
+    *   `<text_pair>`: Cho cặp văn bản với điểm tương đồng liên tục.
+    *   `<instr>`: Cho dữ liệu hướng dẫn (cặp instruction-response).
+    *   `<ocr>`: Cho dữ liệu OCR/OCQ (ảnh + câu hỏi -> câu trả lời).
+    *   `<vqa_multi>`: Cho VQA đa lượt (ảnh + câu hỏi -> câu trả lời).
+    *   `<vqa_single>`: Cho VQA đơn lượt (ảnh + câu hỏi -> câu trả lời).
+*   **Đầu ra:** Một vector dày `1024-d` duy nhất biểu diễn nội dung ngữ nghĩa và/hoặc thị giác của đầu vào.
 
 ---
 
-## Key Features & Advantages
+## Παράδειγμα Huấn luyện
 
-*   ✅ **Unified Multimodal Embedding:** A single, coherent vector space simplifies integration and downstream tasks.
-*   ✅ **Prefix-Guided Training:** Enables nuanced, task-aware learning within the unified space.
-*   ✅ **Exceptional Data Diversity:** Training on text similarity, instructions, complex OCR (handwriting, forms, diagrams, medical), and deep VQA (reasoning, charts, specialized radiology) ensures robustness and broad applicability.
-*   ✅ **Simplified Multimodal RAG/Search:** Allows querying a single index with text, image, or mixed queries to retrieve relevant multimodal information.
-*   ✅ **Enhanced Cross-Modal Understanding:** Joint training fosters embeddings sensitive to fine-grained visual-textual correlations.
-*   ✅ **High-Dimensional Nuance:** 1024-d captures detailed information crucial for complex tasks.
-*   ✅ **Multi-Image Aware:** Natively processes inputs containing multiple images.
-*   ✅ **Strong Vietnamese & Zero-Shot Capabilities:** Optimized for Vietnamese with proven cross-lingual generalization potential due to multilingual data inclusion.
-*   ✅ **Foundation for Advanced AI:** An ideal building block for sophisticated multimodal RAG, Graph RAG, semantic search, classification, and analysis systems.
+Sự mạnh mẽ và linh hoạt của viPyloQwen bắt nguồn từ sự kết hợp cộng hưởng giữa chiến lược tối ưu hóa độc đáo và dữ liệu huấn luyện cực kỳ đa dạng:
+
+1.  **Tập Dữ liệu Phong phú và Không đồng nhất (Hơn 11 Triệu Mẫu):** Kho dữ liệu huấn luyện tích hợp nhiều loại dữ liệu và nhiệm vụ, được liên kết thông qua các tiền tố đầu vào:
+    *   **Tương đồng Ngữ nghĩa Văn bản-Văn bản (`<text_pair>`, ~5.6M):** Các cặp $(t_a, t_b)$ với điểm tương đồng $s \in [0, 1]$, thúc đẩy hiểu biết văn bản tinh tế.
+    *   **Thực hiện Hướng dẫn (`<instr>`, ~0.6M):** Các cặp (hướng dẫn đơn và đa lượt $i$, phản hồi $r$), tăng cường khả năng suy luận theo ngữ cảnh và biểu diễn việc thực thi nhiệm vụ.
+    *   **OCR/OCQ Đa hình ảnh Đa dạng (`<ocr>`, ~2.5M):** Hạng mục này vượt xa việc nhận dạng văn bản tài liệu đơn giản. Nó bao gồm một phổ rộng các tác vụ nhận dạng văn bản trực quan trên 1-5 ảnh mỗi mẫu, chẳng hạn như:
+        *   Chú thích cảnh đường phố và nhận dạng văn bản.
+        *   Hiểu tài liệu toán học (công thức, sơ đồ).
+        *   Sự tương tác giữa văn bản và hình ảnh trong tài liệu nói chung.
+        *   Phân tích biểu đồ và sơ đồ.
+        *   Nhận dạng chữ viết tay (ví dụ: hóa đơn, mẫu yêu cầu bảo hiểm, báo cáo tai nạn).
+        *   Nhận dạng các giấy tờ thông dụng của Việt Nam (ví dụ: Căn cước công dân - CCCD, giấy phép lái xe).
+    *   **VQA Đa hình ảnh Phức tạp (`<vqa_single>`, `<vqa_multi>`, ~2.5M):** Các tác vụ này (VQA đơn và đa lượt), cũng sử dụng 1-5 ảnh, đòi hỏi khả năng suy luận trực quan sâu sắc hơn được tích hợp với các truy vấn văn bản. Dữ liệu bao gồm:
+        *   Trả lời câu hỏi trực quan tổng quát trên nhiều cảnh khác nhau.
+        *   Diễn giải bảng và biểu đồ phức tạp đòi hỏi suy luận.
+        *   **Phân tích Hình ảnh Y tế Chuyên sâu (~0.5M mẫu):** Một tập hợp con đáng kể dành riêng cho OCR và VQA trong lĩnh vực X quang. Điều này bao gồm việc phân tích các bản quét y tế đa dạng (hình ảnh da liễu, X-quang, CT, MRI) để trả lời các câu hỏi chẩn đoán liên quan đến các lĩnh vực sức khỏe quan trọng bao gồm da, xương, tim, phổi, não và răng.
+    *   **Phân bổ Ngôn ngữ:** Mặc dù tập dữ liệu chủ yếu bao gồm nội dung **tiếng Việt** để đảm bảo hiệu suất mạnh mẽ trong bối cảnh này, nó tích hợp một cách chiến lược lượng đáng kể các mẫu **tiếng Anh** và **tiếng Trung** trong tất cả các danh mục. Nền tảng đa ngôn ngữ này rất quan trọng để cho phép mô hình **khái quát hóa zero-shot** hiệu quả sang các ngôn ngữ khác chưa được thấy.
+
+2.  **Tối ưu hóa Tổn thất Hỗn hợp Động được Dẫn hướng bằng Tiền tố:**
+    *   Như đã mô tả trước đây, tiền tố của mỗi mẫu sẽ động chọn một hàm loss phù hợp từ một bộ được định nghĩa trước.
+    *   **Bộ Hàm Loss được Áp dụng:**
+        *   `<text_pair>`: InfoNCE Đối xứng + Hồi quy Tương đồng MSE.
+        *   `<instr>`: InfoNCE Đối xứng + Tối đa hóa Tương đồng Cosine Trực tiếp.
+        *   `<ocr>`, `<vqa_single>`, `<vqa_multi>`: InfoNCE Đối xứng + Tổn thất Lề Triplet (Triplet Margin Loss) (lề có thể được điều chỉnh cho đa lượt).
+
+Sự kết hợp giữa tập dữ liệu phong phú, đa dạng về lĩnh vực và cơ chế huấn luyện thích ứng này cho phép viPyloQwen phát triển một không gian embedding thực sự thống nhất và có năng lực cao, áp dụng được trong nhiều tình huống thực tế.
 
 ---
 
-## How to Use (Conceptual Example)
+## Tính năng & Ưu điểm Chính
+
+*   ✅ **Embedding Đa phương thức Thống nhất:** Không gian vector đơn nhất, gắn kết giúp đơn giản hóa việc tích hợp và các tác vụ đầu cuối.
+*   ✅ **Huấn luyện Dẫn hướng bằng Tiền tố:** Cho phép học các sắc thái, nhận biết nhiệm vụ trong không gian thống nhất.
+*   ✅ **Dữ liệu Cực kỳ Đa dạng:** Huấn luyện trên tương đồng văn bản, hướng dẫn, OCR phức tạp (chữ viết tay, biểu mẫu, sơ đồ, y tế) và VQA sâu (suy luận, biểu đồ, X quang chuyên ngành) đảm bảo tính mạnh mẽ và khả năng ứng dụng rộng rãi.
+*   ✅ **RAG/Tìm kiếm Đa phương thức Đơn giản hóa:** Cho phép truy vấn một chỉ mục duy nhất với các truy vấn văn bản, hình ảnh hoặc hỗn hợp để truy xuất thông tin đa phương thức liên quan.
+*   ✅ **Tăng cường Hiểu biết Chéo phương thức:** Huấn luyện chung thúc đẩy các embedding nhạy cảm với các mối tương quan hình ảnh-văn bản tinh tế.
+*   ✅ **Nắm bắt Chi tiết ở Chiều cao:** Embedding 1024-d thu giữ thông tin chi tiết quan trọng cho các tác vụ phức tạp.
+*   ✅ **Nhận biết Đa hình ảnh:** Xử lý tự nhiên các đầu vào chứa nhiều hình ảnh.
+*   ✅ **Mạnh mẽ Tiếng Việt & Zero-Shot Tốt:** Tối ưu hóa cho tiếng Việt với khả năng khái quát hóa chéo ngôn ngữ đã được chứng minh nhờ bao gồm dữ liệu đa ngôn ngữ.
+*   ✅ **Nền tảng cho AI Tiên tiến:** Một khối xây dựng lý tưởng cho các hệ thống RAG đa phương thức, Graph RAG, tìm kiếm ngữ nghĩa, phân loại và phân tích phức tạp.
+
+---
+
+## Cách Sử dụng (Ví dụ Khái niệm)
 
 ```python
 import torch
 from PIL import Image
-# Assume viPyloQwenEmbedder class is available after release
+# Giả sử lớp viPyloQwenEmbedder có sẵn sau khi phát hành
 # from viPyloQwen_embedder import viPyloQwenEmbedder
 
-# embedder = viPyloQwenEmbedder(checkpoint_path="./path/to/viPyloQwen/", device="cuda")
+# embedder = viPyloQwenEmbedder(checkpoint_path="./duong/dan/toi/viPyloQwen/", device="cuda")
 
-# --- Example: VQA Single Turn (e.g., Medical Image) ---
+# --- Ví dụ: VQA Đơn lượt (ví dụ: Ảnh Y tế) ---
 prefix_vqa = "<vqa_single>"
-text_input = "Is there evidence of fracture in the distal radius?" # Example query
-image_input = Image.open("wrist_xray.png").convert("RGB") # Example image
+van_ban_dau_vao = "Có bằng chứng về gãy xương ở đầu dưới xương quay không?" # Truy vấn ví dụ
+anh_dau_vao = Image.open("xquang_cotay.png").convert("RGB") # Ảnh ví dụ
 
-# Conceptual encoding call - the prefix guides the internal processing
-# mixed_embedding = embedder.encode(text=f"{prefix_vqa} {text_input}", images=[image_input])
-# print(mixed_embedding.shape) # Expected: torch.Size([1, 1024])
+# Lệnh mã hóa khái niệm - tiền tố hướng dẫn xử lý nội bộ
+# embedding_hon_hop = embedder.encode(text=f"{prefix_vqa} {van_ban_dau_vao}", images=[anh_dau_vao])
+# print(embedding_hon_hop.shape) # Dự kiến: torch.Size([1, 1024])
 
-# --- Example: Text Similarity ---
+# --- Ví dụ: Tương đồng Văn bản ---
 prefix_sim = "<text_pair>"
-text_a = "Patient reported mild discomfort."
-text_b = "Subject experienced slight pain."
+van_ban_a = "Bệnh nhân báo cáo khó chịu nhẹ."
+van_ban_b = "Đối tượng trải qua cơn đau nhẹ."
 
-# Conceptual encoding calls
-# text_a_embedding = embedder.encode(text=f"{prefix_sim} {text_a}")
-# text_b_embedding = embedder.encode(text=f"{prefix_sim} {text_b}")
+# Lệnh mã hóa khái niệm
+# embedding_a = embedder.encode(text=f"{prefix_sim} {van_ban_a}")
+# embedding_b = embedder.encode(text=f"{prefix_sim} {van_ban_b}")
 
-# Compute similarity (e.g., cosine)
-# similarity = torch.nn.functional.cosine_similarity(text_a_embedding, text_b_embedding)
-# print(similarity)
+# Tính toán độ tương đồng (ví dụ: cosine)
+# do_tuong_dong = torch.nn.functional.cosine_similarity(embedding_a, embedding_b)
+# print(do_tuong_dong)
 
-# --- Example: OCR (e.g., Handwritten Form) ---
+# --- Ví dụ: OCR (ví dụ: Biểu mẫu Viết tay) ---
 prefix_ocr = "<ocr>"
-text_input = "What is the policy number listed?" # Example query
-image_input = Image.open("handwritten_claim_form.jpg").convert("RGB") # Example image
+van_ban_dau_vao = "Số hợp đồng được liệt kê là gì?" # Truy vấn ví dụ
+anh_dau_vao = Image.open("mau_yeucau_viet_tay.jpg").convert("RGB") # Ảnh ví dụ
 
-# Conceptual encoding call
-# form_embedding = embedder.encode(text=f"{prefix_ocr} {text_input}", images=[image_input])
-# print(form_embedding.shape) # Expected: torch.Size([1, 1024])
+# Lệnh mã hóa khái niệm
+# embedding_mau = embedder.encode(text=f"{prefix_ocr} {van_ban_dau_vao}", images=[anh_dau_vao])
+# print(embedding_mau.shape) # Dự kiến: torch.Size([1, 1024])
 ```
 
 ---
 
-## Potential Applications
+## Ứng dụng Tiềm năng
 
-*   **Multimodal RAG:** Retrieve highly relevant text passages, images, tables, or document sections (including medical reports or financial statements) using unified queries.
-*   **Graph RAG:** Build knowledge graphs where nodes represent diverse entities (patients, documents, procedures, visual findings) linked via unified embeddings.
-*   **Cross-Modal Retrieval:** Efficiently search for medical images based on textual descriptions, find relevant documents from images of forms, etc.
-*   **Document Intelligence:** Deep analysis of complex documents like insurance claims, scientific papers, or technical manuals, leveraging both visual layout and content.
-*   **Contextual Visual Search:** Find visually similar images (e.g., medical scans, product photos) refined by specific textual context.
-
----
-
-## Development Status & Future Work
-
-*   Actively under development. Model checkpoints, evaluation code, benchmarks, and comprehensive usage examples will be released soon.
-*   Ongoing work includes extensive benchmarking across Vietnamese, English, and cross-lingual tasks, ablation studies on data components, exploring larger base models, and potential integration of further modalities.
+*   **RAG Đa phương thức:** Truy xuất các đoạn văn bản, hình ảnh, bảng biểu hoặc các phần tài liệu có liên quan cao (bao gồm báo cáo y tế hoặc báo cáo tài chính) bằng các truy vấn thống nhất.
+*   **Graph RAG:** Xây dựng đồ thị tri thức nơi các nút đại diện cho các thực thể đa dạng (bệnh nhân, tài liệu, quy trình, phát hiện hình ảnh) được liên kết qua các embedding thống nhất.
+*   **Truy xuất Chéo phương thức:** Tìm kiếm hiệu quả hình ảnh y tế dựa trên mô tả văn bản, tìm tài liệu liên quan từ hình ảnh biểu mẫu, v.v.
+*   **Trí tuệ Tài liệu (Document Intelligence):** Phân tích sâu các tài liệu phức tạp như yêu cầu bảo hiểm, bài báo khoa học hoặc hướng dẫn kỹ thuật, tận dụng cả bố cục trực quan và nội dung.
+*   **Tìm kiếm Hình ảnh theo Ngữ cảnh:** Tìm các hình ảnh tương tự về mặt trực quan (ví dụ: ảnh quét y tế, ảnh sản phẩm) được tinh chỉnh bởi ngữ cảnh văn bản cụ thể đi kèm.
 
 ---
 
-## License
+## Tình trạng Phát triển & Công việc Tương lai
 
-*   Licensing details will be announced upon release.
-*   A commercial license option will be available. For inquiries regarding commercial use, please contact: **nguyen@hatto.com**.
+*   Đang được phát triển tích cực. Các điểm kiểm tra (checkpoints) mô hình, mã đánh giá, benchmarks và ví dụ sử dụng toàn diện sẽ sớm được phát hành.
+*   Công việc đang diễn ra bao gồm benchmarking sâu rộng trên các tác vụ tiếng Việt, tiếng Anh và chéo ngôn ngữ, các nghiên cứu cắt lớp (ablation studies) về các thành phần dữ liệu, khám phá các mô hình cơ sở lớn hơn và tích hợp tiềm năng các phương thức khác.
 
 ---
 
-## Citation
+## Giấy phép
 
-Please cite this repository URL until a formal publication is available.
+*   Chi tiết giấy phép sẽ được công bố khi phát hành.
+*   Sẽ có tùy chọn giấy phép thương mại. Đối với các yêu cầu liên quan đến việc sử dụng thương mại, vui lòng liên hệ: **nguyen@hatto.com**.
+
+---
+
+## Trích dẫn
+
+Vui lòng trích dẫn URL của kho lưu trữ này cho đến khi có ấn phẩm chính thức.
 
 ```bibtex
 @misc{viPyloQwen_github_2024,
@@ -154,7 +157,7 @@ Please cite this repository URL until a formal publication is available.
   year         = {2024},
   publisher    = {GitHub},
   journal      = {GitHub repository},
-  howpublished = {\url{https://github.com/EraX-AI/viPyloQwen}} % Final URL
+  howpublished = {\url{https://github.com/EraX-AI/viPyloQwen}} % Thay bằng URL cuối cùng
 }
 
 @misc{faysse2024colpali,
