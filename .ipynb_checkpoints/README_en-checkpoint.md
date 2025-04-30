@@ -69,6 +69,31 @@ viPyloQwen's robustness and versatility stem from the synergistic combination of
 
 This combination of a rich, domain-diverse dataset and an adaptive training mechanism allows viPyloQwen to develop a truly unified and highly capable embedding space applicable across a wide range of real-world scenarios.
 
+## Trainign details
+
+The training of the `viPyloQwen` model involved a significant computational effort, underscoring the complexity of learning from such a large and diverse multimodal dataset.
+
+*   **Hardware:** The model was trained on a high-performance computing cluster equipped with **4x NVIDIA H100 GPUs**, each with 94GB of VRAM connected via NVLink.
+*   **Duration:** The primary training phase spanned approximately **one month** of continuous computation on this hardware setup.
+*   **Framework:** Distributed training was orchestrated using the **Hugging Face `accelerate` library**, leveraging its capabilities for efficient multi-GPU scaling (likely configured with DeepSpeed ZeRO stage 3 or FSDP, as specified in the `qwen2VL2B.yaml` configuration file).
+*   **Precision & Optimizations:** Training utilized **`bfloat16` mixed precision** to optimize memory usage and computational throughput. **Flash Attention 2** was enabled for further efficiency gains in the attention mechanism.
+*   **Key Hyperparameters:**
+    *   **Base Model:** `Qwen/Qwen2-VL-2B-Instruct`
+    *   **Optimizer:** AdamW (standard with Hugging Face Trainer)
+    *   **Learning Rate:** 1e-4 (with linear decay and 5% warmup)
+    *   **Epochs:** 2
+    *   **Batch Size (per device):** 24
+    *   **Gradient Accumulation Steps:** 8
+    *   **Effective Global Batch Size:** 768 (24 * 4 GPUs * 8 accumulation)
+    *   **Max Sequence Length:** 8192 tokens
+    *   **Weight Decay:** 0.001
+    *   **Max Gradient Norm:** 1.0
+    *   **Pooling Strategy:** Mean Pooling
+    *   **Loss Hyperparameters:** Temperature = 0.07, Contrastive Margin = 0.2
+*   **Dataset:** Trained on the described 11M+ sample dataset (`TRAIN_11M.jsonl`) and evaluated using a 5k sample split (`EVAL_5k.jsonl`).
+
+This setup highlights the substantial resources required to train state-of-the-art multimodal embedding models capable of handling diverse, real-world data effectively.
+
 ---
 
 ## Key Features & Advantages

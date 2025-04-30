@@ -69,6 +69,31 @@ Sự mạnh mẽ và linh hoạt của viPyloQwen bắt nguồn từ sự kết 
 
 Sự kết hợp giữa tập dữ liệu phong phú, đa dạng về lĩnh vực và cơ chế huấn luyện thích ứng này cho phép viPyloQwen phát triển một không gian embedding thực sự thống nhất và có năng lực cao, áp dụng được trong nhiều tình huống thực tế.
 
+## Chi tiết Huấn luyện
+
+Việc huấn luyện mô hình `viPyloQwen` đòi hỏi yêu cầu tài nguyên tính toán lớn, nhấn mạnh sự phức tạp của việc học từ một tập dữ liệu đa phương thức lớn và đa dạng như vậy.
+
+*   **Phần cứng:** Mô hình được huấn luyện trên một cụm máy tính hiệu năng cao bao gồm **4x GPU NVIDIA H100**, mỗi GPU có 94GB VRAM được kết nối qua NVLink.
+*   **Thời gian:** Giai đoạn huấn luyện chính kéo dài khoảng **một tháng** tính toán liên tục trên cấu hình phần cứng này.
+*   **Framework:** Quá trình huấn luyện phân tán được điều phối sử dụng thư viện **`accelerate` của Hugging Face**, khai thác khả năng mở rộng đa GPU hiệu quả của nó (có khả năng được cấu hình với DeepSpeed ZeRO stage 3 hoặc FSDP, theo tệp cấu hình `qwen2VL2B.yaml`).
+*   **Độ chính xác & Tối ưu hóa:** Quá trình huấn luyện sử dụng độ chính xác hỗn hợp **`bfloat16`** để tối ưu hóa việc sử dụng bộ nhớ và thông lượng tính toán. **Flash Attention 2** đã được kích hoạt nhằm tăng cường hiệu quả cho cơ chế attention.
+*   **Các siêu tham số chính (Key Hyperparameters):**
+    *   **Mô hình cơ sở (Base Model):** `Qwen/Qwen2-VL-2B-Instruct`
+    *   **Bộ tối ưu hóa (Optimizer):** AdamW (tiêu chuẩn của Hugging Face Trainer)
+    *   **Tốc độ học (Learning Rate):** 1e-4 (với giảm tuyến tính và 5% warmup)
+    *   **Số Epochs:** 2
+    *   **Kích thước lô trên mỗi thiết bị (Batch Size per device):** 24
+    *   **Số bước Tích lũy Gradient (Gradient Accumulation Steps):** 8
+    *   **Kích thước lô hiệu dụng toàn cục (Effective Global Batch Size):** 768 (24 * 4 GPUs * 8 accumulation)
+    *   **Độ dài chuỗi tối đa (Max Sequence Length):** 8192 tokens
+    *   **Suy giảm trọng số (Weight Decay):** 0.001
+    *   **Chuẩn Gradient Tối đa (Max Gradient Norm):** 1.0
+    *   **Chiến lược Pooling (Pooling Strategy):** Mean Pooling
+    *   **Siêu tham số Hàm Loss:** Temperature = 0.07, Contrastive Margin = 0.2
+*   **Dataset:** Huấn luyện trên tập dữ liệu hơn 11 triệu mẫu đã mô tả (`TRAIN_11M.jsonl`) và đánh giá bằng tập con 5 nghìn mẫu (`EVAL_5k.jsonl`).
+
+Cấu hình này cho thấy yêu cầu tài nguyên đáng kể cần thiết để huấn luyện các mô hình embedding đa phương thức tiên tiến, có khả năng xử lý hiệu quả dữ liệu đa dạng trong thực tế.
+
 ---
 
 ## Tính năng & Ưu điểm Chính
