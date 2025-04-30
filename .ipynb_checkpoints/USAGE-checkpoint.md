@@ -8,9 +8,11 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from tqdm.auto import tqdm # Sử dụng tqdm.auto cho linh hoạt
 import time # Thêm time để đo thời gian nếu cần
+```
 
 # --- Phần 1: Cấu hình và Khởi tạo ---
 
+```python
 # -- Cấu hình Logging --
 logging.basicConfig(
     level=logging.INFO,
@@ -64,9 +66,11 @@ except Exception as e:
     import traceback
     logger.error(traceback.format_exc())
     exit()
+```
 
 # --- Phần 2: Tạo Embeddings cho Lưu trữ (Mô phỏng Vector DB) ---
 
+```python
 # -- Dữ liệu ví dụ --
 sample_data = {
     "doc1_chunk1": {"type": "text", "content": "Hợp đồng này quy định các điều khoản về việc cung cấp dịch vụ điện toán đám mây."},
@@ -171,10 +175,13 @@ if batch_ids_to_encode:
         logger.error(f"Error during batch encoding: {e}")
         import traceback
         logger.error(traceback.format_exc())
+```
 
 # --- Phần 3: Truy vấn và So sánh ---
 
-# -- Chuẩn bị DB cho tìm kiếm --
+## -- Chuẩn bị DB cho tìm kiếm --
+
+```python
 db_ids = list(vector_database.keys())
 if db_ids:
     db_embeddings = np.concatenate(list(vector_database.values()), axis=0)
@@ -215,10 +222,13 @@ def search_db(query_embedding_np, top_k=3):
     except Exception as e:
         logger.error(f"Error during similarity search: {e}")
         return []
+```
 
-# -- Kịch bản Truy vấn / So sánh --
+## -- Kịch bản Truy vấn / So sánh --
 
-# 3a) Query bằng text thông thường
+### 3a) Query bằng text thông thường
+
+```python
 try:
     query_text_normal = "Tìm điều khoản bảo mật"
     logger.info(f"\nQuerying DB with text: '{query_text_normal}' (No prefix)...")
@@ -234,8 +244,11 @@ try:
         print("  No results found or DB empty.")
 except Exception as e:
     logger.error(f"Error during text query: {e}")
+```
 
-# 3b) Query bằng ảnh
+### 3b) Query bằng ảnh
+
+```python
 try:
     query_image_path = "sample_images/query_car.jpg" # !!! THAY ĐƯỜNG DẪN !!!
     query_image = Image.open(query_image_path).convert("RGB")
@@ -254,8 +267,11 @@ except FileNotFoundError:
     logging.warning(f"Query image file not found: {query_image_path}. Skipping image query.")
 except Exception as e:
     logging.error(f"Error during image query: {e}")
+```
 
-# 3c) Query bằng ảnh + text MÔ TẢ
+### 3c) Query bằng ảnh + text MÔ TẢ
+
+```python
 try:
     query_img_desc_path = "sample_images/query_invoice.png" # !!! THAY ĐƯỜNG DẪN !!!
     query_img_desc = Image.open(query_img_desc_path).convert("RGB")
@@ -275,9 +291,11 @@ except FileNotFoundError:
     logging.warning(f"Query image file not found: {query_img_desc_path}. Skipping image+description query.")
 except Exception as e:
     logging.error(f"Error during image+description query: {e}")
+```
 
+### 3d) Query bằng ảnh + text CÂU HỎI OCR/VQA
 
-# 3d) Query bằng ảnh + text CÂU HỎI OCR/VQA
+```python
 try:
     query_img_task_path = "sample_images/license_plate.jpg" # !!! THAY ĐƯỜNG DẪN !!!
     query_img_task = Image.open(query_img_task_path).convert("RGB")
@@ -298,9 +316,11 @@ except FileNotFoundError:
     logging.warning(f"Query image file not found: {query_img_task_path}. Skipping image+task query.")
 except Exception as e:
     logging.error(f"Error during image+task query: {e}")
+```
 
-# 3e) So sánh trực tiếp 2 danh sách (Arrays) Ảnh hoặc Text
-    
+### 3e) So sánh trực tiếp 2 danh sách (Arrays) Ảnh hoặc Text
+
+```python
 try:
     # Ví dụ so sánh danh sách ảnh
     image_paths_array1 = ["sample_images/cat1.jpg", "sample_images/dog1.jpg"]
