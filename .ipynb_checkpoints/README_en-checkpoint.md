@@ -160,7 +160,7 @@ try:
 
     # Load model viPyloQwen đã huấn luyện
     # Truyền embed_dim đúng vào đây nếu config của model không lưu
-    embedder = viPyloQwenEmbedder.from_pretrained(
+    embedder = ViPyloQwenEmbedder.from_pretrained(
         MODEL_PATH,
         embed_dim=EXPECTED_EMBED_DIM, # Đảm bảo embed_dim đúng
         trust_remote_code=True

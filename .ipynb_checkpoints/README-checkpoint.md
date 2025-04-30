@@ -151,8 +151,8 @@ logger.info(f"Attempting to load model from: {MODEL_PATH}")
 # -- Load Model và Processor --
 try:
     # Import lớp model từ file đã cập nhật
-    from model import ViPolyQwenEmbedder as viPyloQwenEmbedder # Đổi tên khi import cho rõ
-    logger.info(f"Imported viPyloQwenEmbedder from model.py")
+    from model import ViPolyQwenEmbedder as ViPyloQwenEmbedder # Đổi tên khi import cho rõ
+    logger.info(f"Imported ViPyloQwenEmbedder from model.py")
 
     # Load processor từ cùng đường dẫn model (quan trọng)
     processor = AutoProcessor.from_pretrained(MODEL_PATH, trust_remote_code=True)
@@ -160,7 +160,7 @@ try:
 
     # Load model viPyloQwen đã huấn luyện
     # Truyền embed_dim đúng vào đây nếu config của model không lưu
-    embedder = viPyloQwenEmbedder.from_pretrained(
+    embedder = ViPyloQwenEmbedder.from_pretrained(
         MODEL_PATH,
         embed_dim=EXPECTED_EMBED_DIM, # Đảm bảo embed_dim đúng
         trust_remote_code=True
