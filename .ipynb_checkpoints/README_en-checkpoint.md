@@ -48,6 +48,50 @@ The result is 1024-dimensional embeddings that facilitate powerful downstream ap
     *(Note: For general inference/embedding, prefixes are typically omitted unless querying a specific task like OCR/VQA - see Usage Guide)*.
 *   **Output:** A single `1024-d` dense, L2-normalized vector representing the input.
 
+![viPolyQwen Architecture](example-diagrams.svg)
+
+## Why Prefix Tokens Are Necessary for Different Data Modalities in Machine Learning
+
+Let look at the rooles of each component:
+
+**Attention Pooling** Attention Pooling focuses on extracting salient information from the sequence of encoder hidden states. It learns to summarize the output sequence into a single 1D vector by weighting important features more heavily. This improves the quality of the summary vector before it is used in loss computations. However, Attention Pooling itself has no inherent knowledge of which task the input belongs to (e.g., text similarity, OCR, VQA).
+
+**Dynamic Losses** Dynamic Losses shape the embedding space. Each loss function (InfoNCE, Triplet, MSE, Cosine) imposes a different “optimization pressure,” guiding the model to arrange embeddings according to the nature of each task (e.g., pushing hard negatives apart in Triplet, matching similarity scores in MSE). It determines how embeddings are compared and optimized.
+
+**Prefix Tokens** Prefix Tokens serve as an explicit signal that links each input example to the appropriate loss function within the Dynamic Losses mechanism. They “tell” the system, “This is OCR data—apply loss function X.”
+
+Then Why the **Model Struggles** Without Prefix Tokens
+
+**Ambiguity**
+    Without prefixes, the model must implicitly infer the task type from the input structure (e.g., presence of an image, question format, similarity score). This is much harder and prone to confusion:
+*   An image question could be VQA or OCR QA.
+*    A pair of texts could denote similarity scoring (requiring MSE) or an instruction–response pair (requiring Cosine or NCE).
+*   Distinguishing single-turn vs. multi-turn VQA is unclear from input alone.
+*   This ambiguity risks misapplying loss functions to examples, leading to noisy learning signals and inefficient training.
+
+Conflicting **Geometric Constraints**
+*   Different loss functions enforce different—and sometimes conflicting—geometric constraints on the embedding space. For instance:
+*   Triplet loss enforces a specific margin between positives and negatives.
+*   InfoNCE focuses on distinguishing a positive from all negatives in the batch.
+*   MSE drives embeddings to match a continuous score.
+*   Expecting a single embedding to satisfy all these constraints across tasks, without a clear signal of which constraint to prioritize, is highly challenging. Prefixes let the model know when to apply which constraint.
+
+**Training Stability** Clear task signals from prefixes stabilize training. Relying on implicit inference increases optimization difficulty and can hinder convergence.
+
+Benefits of Prefix Tokens in Training
+*   Precise Optimization Guidance
+Ensures that the correct loss function is applied to each data type, enabling more effective shaping of the embedding space for each task.
+*   Task-Aware Representation Nuances
+Prefixes help the model learn subtle, task-specific adjustments in the embedding. Although all embeddings share a unified space, the optimization path can differ slightly based on the prefix. For example, upon seeing <ocr>, the model may activate neurons related to text localization more strongly during loss computation.
+*   Better Transfer Learning
+Knowledge learned from optimizing one task (e.g., OCR) can benefit others (e.g., general text understanding) through shared backbone parameters. Prefixes allow controlled, simultaneous specialization and generalization.
+
+vs. **Simplifying Inference**
+*   It is true that training without prefixes yields the simplest inference—always feed in text/image without a prefix.
+*   However, with the current prefix-based training approach, most common embedding scenarios (text chunks, single images, image+caption) still require no prefix at inference.
+*   Prefixes are only needed when you intend to execute a highly specialized query (e.g., OCR QA or VQA) and your vector database is constructed accordingly (less common), or when you perform a two-stage retrieval and ranking pipeline (more common).
+*   The additional complexity at inference is minimal—and only for those specialized cases—in exchange for significantly improved embedding quality from more effective, prefix-guided training.
+
 ---
 
 ## Training Paradigm

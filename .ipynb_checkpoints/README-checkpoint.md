@@ -51,6 +51,8 @@ Kết quả là các embedding 1024 chiều tạo điều kiện cho các ứng 
     *(Lưu ý: Đối với inference/embedding thông thường, tiền tố thường được bỏ qua trừ khi truy vấn một nhiệm vụ cụ thể như OCR/VQA - xem Hướng dẫn Sử dụng)*.
 *   **Đầu ra:** Một vector dày `1024-d` duy nhất, đã được chuẩn hóa L2, đại diện cho đầu vào.
 
+![viPolyQwen Architecture](example-diagrams.svg)
+
 ## Giải thích lý do cần có tiền tố cho các mẫu dữ liệu khác nhau khi dạy máy học
 
 Hãy phân tích vai trò riêng biệt của từng thành phần:
