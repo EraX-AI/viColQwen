@@ -19,10 +19,10 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
-logger = logging.getLogger("viPyloQwen_Usage")
+logger = logging.getLogger("viPolyQwen_Usage")
 
 # -- Cấu hình Model và Device --
-MODEL_PATH = "./path/to/your/finetuned_viPyloQwen_model"
+MODEL_PATH = "./path/to/your/finetuned_viPolyQwen_model"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Kích thước embedding bạn đã huấn luyện (ví dụ: 1024)
@@ -34,19 +34,19 @@ INFERENCE_BATCH_SIZE = 16
 # Độ dài sequence tối đa (nếu cần override processor default)
 MAX_LENGTH = 8192
 
-logger.info(f"Starting viPyloQwen Usage Script on device: {DEVICE}")
+logger.info(f"Starting viPolyQwen Usage Script on device: {DEVICE}")
 logger.info(f"Attempting to load model from: {MODEL_PATH}")
 
 # -- Load Model và Processor --
 try:
-    from model import ViPolyQwenEmbedder as ViPyloQwenEmbedder
-    logger.info(f"Imported ViPyloQwenEmbedder from model.py")
+    from model import ViPolyQwenEmbedder as ViPolyQwenEmbedder
+    logger.info(f"Imported ViPolyQwenEmbedder from model.py")
 
     processor = AutoProcessor.from_pretrained(MODEL_PATH, trust_remote_code=True)
     logger.info(f"Processor loaded successfully.")
 
-    # Load model viPyloQwen đã huấn luyện
-    embedder = ViPyloQwenEmbedder.from_pretrained(
+    # Load model viPolyQwen đã huấn luyện
+    embedder = ViPolyQwenEmbedder.from_pretrained(
         MODEL_PATH,
         embed_dim=EXPECTED_EMBED_DIM,
         processor = processor,
