@@ -133,6 +133,9 @@ $$\nabla_{\theta} \mathcal{L}_{\mathrm{batch}} = \frac{1}{B} \sum_{i=1}^{B} \nab
 
 This explicit conditioning enables task specialization *within* the unified space $\mathcal{E}$. For inference on general data, no prefix is used ($p = \text{None}$), yielding a general-purpose embedding $f_\theta(x, \text{None})$.
 
+![viPolyQwen Architecture](viPolyQwen-Architecture.png){width=80% .center}
+
+
 ## 4. Training Paradigm
 
 ### 4.1 Dataset Composition
