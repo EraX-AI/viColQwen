@@ -90,41 +90,66 @@ This combination of a rich, domain-diverse dataset and an adaptive training mech
 ```python
 import torch
 from PIL import Image
-# Assume viPyloQwenEmbedder class is available after release
-# from viPyloQwen_embedder import viPyloQwenEmbedder
+# Giả sử bạn đã load model và processor vào biến `embedder` và `processor`
+# embedder = ColPaLiQwenEmbedder.from_pretrained("./path/to/your/finetuned_model")
+# processor = AutoProcessor.from_pretrained("./path/to/your/finetuned_model", trust_remote_code=True) # Hoặc từ model gốc
+# embedder.processor = processor # Gán processor cho embedder nếu load riêng
+# embedder.to("cuda") # Chuyển model lên GPU
 
-# embedder = viPyloQwenEmbedder(checkpoint_path="./path/to/viPyloQwen/", device="cuda")
-
-# --- Example: VQA Single Turn (e.g., Medical Image) ---
+# --- Ví dụ: VQA Single Turn (e.g., Medical Image) ---
 prefix_vqa = "<vqa_single>"
-text_input = "Is there evidence of fracture in the distal radius?" # Example query
-image_input = Image.open("wrist_xray.png").convert("RGB") # Example image
+text_input_vqa = "Is there evidence of fracture in the distal radius?" # Example query
+image_input_vqa = Image.open("wrist_xray.png").convert("RGB") # Example image
 
-# Conceptual encoding call - the prefix guides the internal processing
-# mixed_embedding = embedder.encode(text=f"{prefix_vqa} {text_input}", images=[image_input])
-# print(mixed_embedding.shape) # Expected: torch.Size([1, 1024])
+# Gọi phương thức encode mới
+# Quan trọng: Đảm bảo text có chứa prefix
+mixed_embedding_vqa = embedder.encode(
+    text=f"{prefix_vqa} {text_input_vqa}",
+    images=image_input_vqa
+)
+print("VQA Embedding Shape:", mixed_embedding_vqa.shape) # Expected: torch.Size([1, 1024])
 
-# --- Example: Text Similarity ---
+# --- Ví dụ: Text Similarity ---
 prefix_sim = "<text_pair>"
 text_a = "Patient reported mild discomfort."
 text_b = "Subject experienced slight pain."
 
-# Conceptual encoding calls
-# text_a_embedding = embedder.encode(text=f"{prefix_sim} {text_a}")
-# text_b_embedding = embedder.encode(text=f"{prefix_sim} {text_b}")
+# Mã hóa từng câu riêng lẻ (vì chúng là 2 thực thể riêng biệt trong cặp)
+text_a_embedding = embedder.encode(text=f"{prefix_sim} {text_a}")
+text_b_embedding = embedder.encode(text=f"{prefix_sim} {text_b}")
 
-# Compute similarity (e.g., cosine)
-# similarity = torch.nn.functional.cosine_similarity(text_a_embedding, text_b_embedding)
-# print(similarity)
+# Tính độ tương đồng
+similarity = torch.nn.functional.cosine_similarity(text_a_embedding, text_b_embedding)
+print("Text Similarity:", similarity.item())
+print("Text A Embedding Shape:", text_a_embedding.shape) # Expected: torch.Size([1, 1024])
 
-# --- Example: OCR (e.g., Handwritten Form) ---
+# --- Ví dụ: OCR (e.g., Handwritten Form) ---
 prefix_ocr = "<ocr>"
-text_input = "What is the policy number listed?" # Example query
-image_input = Image.open("handwritten_claim_form.jpg").convert("RGB") # Example image
+text_input_ocr = "What is the policy number listed?" # Example query
+image_input_ocr = Image.open("handwritten_claim_form.jpg").convert("RGB") # Example image
 
-# Conceptual encoding call
-# form_embedding = embedder.encode(text=f"{prefix_ocr} {text_input}", images=[image_input])
-# print(form_embedding.shape) # Expected: torch.Size([1, 1024])
+form_embedding_ocr = embedder.encode(
+    text=f"{prefix_ocr} {text_input_ocr}",
+    images=image_input_ocr
+)
+print("OCR Embedding Shape:", form_embedding_ocr.shape) # Expected: torch.Size([1, 1024])
+
+# --- Ví dụ: Mã hóa nhiều mẫu cùng lúc (batch) ---
+batch_texts = [
+    f"<vqa_single> What is shown?",
+    f"<ocr> Read the title",
+    f"<text_pair> First sentence.",
+    f"<text_pair> Second sentence, similar to first."
+]
+batch_images = [
+    Image.open("image1.jpg").convert("RGB"),
+    Image.open("document_page.png").convert("RGB"),
+    None, # text_pair không cần ảnh
+    None  # text_pair không cần ảnh
+]
+
+batch_embeddings = embedder.encode(text=batch_texts, images=batch_images, batch_size=2) # Ví dụ batch_size=2
+print("Batch Embedding Shape:", batch_embeddings.shape) # Expected: torch.Size([4, 1024])
 ```
 
 ---

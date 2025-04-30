@@ -90,41 +90,66 @@ Sự kết hợp giữa tập dữ liệu phong phú, đa dạng về lĩnh vự
 ```python
 import torch
 from PIL import Image
-# Giả sử lớp viPyloQwenEmbedder có sẵn sau khi phát hành
-# from viPyloQwen_embedder import viPyloQwenEmbedder
+# Giả sử bạn đã load model và processor vào biến `embedder` và `processor`
+# embedder = ColPaLiQwenEmbedder.from_pretrained("./path/to/your/finetuned_model")
+# processor = AutoProcessor.from_pretrained("./path/to/your/finetuned_model", trust_remote_code=True) # Hoặc từ model gốc
+# embedder.processor = processor # Gán processor cho embedder nếu load riêng
+# embedder.to("cuda") # Chuyển model lên GPU
 
-# embedder = viPyloQwenEmbedder(checkpoint_path="./duong/dan/toi/viPyloQwen/", device="cuda")
-
-# --- Ví dụ: VQA Đơn lượt (ví dụ: Ảnh Y tế) ---
+# --- Ví dụ: VQA Single Turn (e.g., Medical Image) ---
 prefix_vqa = "<vqa_single>"
-van_ban_dau_vao = "Có bằng chứng về gãy xương ở đầu dưới xương quay không?" # Truy vấn ví dụ
-anh_dau_vao = Image.open("xquang_cotay.png").convert("RGB") # Ảnh ví dụ
+text_input_vqa = "Hồ sơ chữa gãy xương bàn tay của bệnh nhân Trần Thu Tuyết (mã hiệu 123-DC-1656) lần gần đây nhất thế nào?" # Example query
+image_input_vqa = Image.open("wrist_xray.png").convert("RGB") # Example image
 
-# Lệnh mã hóa khái niệm - tiền tố hướng dẫn xử lý nội bộ
-# embedding_hon_hop = embedder.encode(text=f"{prefix_vqa} {van_ban_dau_vao}", images=[anh_dau_vao])
-# print(embedding_hon_hop.shape) # Dự kiến: torch.Size([1, 1024])
+# Gọi phương thức encode mới
+# Quan trọng: Đảm bảo text có chứa prefix
+mixed_embedding_vqa = embedder.encode(
+    text=f"{prefix_vqa} {text_input_vqa}",
+    images=image_input_vqa
+)
+print("VQA Embedding Shape:", mixed_embedding_vqa.shape) # Expected: torch.Size([1, 1024])
 
-# --- Ví dụ: Tương đồng Văn bản ---
+# --- Ví dụ: Text Similarity ---
 prefix_sim = "<text_pair>"
-van_ban_a = "Bệnh nhân báo cáo khó chịu nhẹ."
-van_ban_b = "Đối tượng trải qua cơn đau nhẹ."
+text_a = "Đầu gối rất đau là lý do gì?"
+text_b = "Tuổi trẻ có thể bị thấp khớp không?"
 
-# Lệnh mã hóa khái niệm
-# embedding_a = embedder.encode(text=f"{prefix_sim} {van_ban_a}")
-# embedding_b = embedder.encode(text=f"{prefix_sim} {van_ban_b}")
+# Mã hóa từng câu riêng lẻ (vì chúng là 2 thực thể riêng biệt trong cặp)
+text_a_embedding = embedder.encode(text=f"{prefix_sim} {text_a}")
+text_b_embedding = embedder.encode(text=f"{prefix_sim} {text_b}")
 
-# Tính toán độ tương đồng (ví dụ: cosine)
-# do_tuong_dong = torch.nn.functional.cosine_similarity(embedding_a, embedding_b)
-# print(do_tuong_dong)
+# Tính độ tương đồng
+similarity = torch.nn.functional.cosine_similarity(text_a_embedding, text_b_embedding)
+print("Text Similarity:", similarity.item())
+print("Text A Embedding Shape:", text_a_embedding.shape) # Expected: torch.Size([1, 1024])
 
-# --- Ví dụ: OCR (ví dụ: Biểu mẫu Viết tay) ---
+# --- Ví dụ: OCR (e.g., Handwritten Form) ---
 prefix_ocr = "<ocr>"
-van_ban_dau_vao = "Số hợp đồng được liệt kê là gì?" # Truy vấn ví dụ
-anh_dau_vao = Image.open("mau_yeucau_viet_tay.jpg").convert("RGB") # Ảnh ví dụ
+text_input_ocr = "Nội dung của Luật Đất Đai 2024 có điểm khác lớn nào?" # Example query
+image_input_ocr = Image.open("handwritten_claim_form.jpg").convert("RGB") # Example image
 
-# Lệnh mã hóa khái niệm
-# embedding_mau = embedder.encode(text=f"{prefix_ocr} {van_ban_dau_vao}", images=[anh_dau_vao])
-# print(embedding_mau.shape) # Dự kiến: torch.Size([1, 1024])
+form_embedding_ocr = embedder.encode(
+    text=f"{prefix_ocr} {text_input_ocr}",
+    images=image_input_ocr
+)
+print("OCR Embedding Shape:", form_embedding_ocr.shape) # Expected: torch.Size([1, 1024])
+
+# --- Ví dụ: Mã hóa nhiều mẫu cùng lúc (batch) ---
+batch_texts = [
+    f"<vqa_single> What is shown?",
+    f"<ocr> Read the title",
+    f"<text_pair> First sentence.",
+    f"<text_pair> Second sentence, similar to first."
+]
+batch_images = [
+    Image.open("image1.jpg").convert("RGB"),
+    Image.open("document_page.png").convert("RGB"),
+    None, # text_pair không cần ảnh
+    None  # text_pair không cần ảnh
+]
+
+batch_embeddings = embedder.encode(text=batch_texts, images=batch_images, batch_size=2) # Ví dụ batch_size=2
+print("Batch Embedding Shape:", batch_embeddings.shape) # Expected: torch.Size([4, 1024])
 ```
 
 ---
