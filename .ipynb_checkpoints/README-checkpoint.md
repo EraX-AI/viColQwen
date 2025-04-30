@@ -3,7 +3,7 @@
 
 **(Mô hình sắp được phát hành - Vui lòng theo dõi!)**
 
-[[English Version](README.en)] | **Tiếng Việt**
+[[English Version](README_en.md)] | **Tiếng Việt**
 
 ## Tóm tắt
 
