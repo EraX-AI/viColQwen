@@ -75,7 +75,7 @@ The training of the `viPyloQwen` model involved a significant computational effo
 
 *   **Hardware:** The model was trained on a high-performance computing cluster equipped with **4x NVIDIA H100 GPUs on Vast.AI**, each with 94GB of VRAM connected via NVLink.
 *   **Duration:** The primary training phase spanned approximately **15 days** of continuous computation on this hardware setup.
-*   **Framework:** Distributed training was orchestrated using the **Hugging Face `accelerate` library**, leveraging its capabilities for efficient multi-GPU scaling (likely configured with DeepSpeed ZeRO stage 3 or FSDP, as specified in the `qwen2VL2B.yaml` configuration file).
+*   **Framework:** Distributed training was orchestrated using the **Hugging Face `accelerate` library**, leveraging its capabilities for efficient multi-GPU scaling with FSDP ZeRO-3.
 *   **Precision & Optimizations:** Training utilized **`bfloat16` mixed precision** to optimize memory usage and computational throughput. **Flash Attention 2** was enabled for further efficiency gains in the attention mechanism.
 *   **Key Hyperparameters:**
     *   **Extended Qwen2VL tokenizer with new special tokens (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) and resize its embedding layer. 

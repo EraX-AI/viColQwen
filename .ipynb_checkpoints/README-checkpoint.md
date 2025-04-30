@@ -75,7 +75,7 @@ Việc huấn luyện mô hình `viPyloQwen` đòi hỏi yêu cầu tài nguyên
 
 *   **Phần cứng:** Mô hình được huấn luyện trên một cụm máy tính hiệu năng cao bao gồm **4x GPU NVIDIA H100 trên Vast.AI**, mỗi GPU có 94GB VRAM được kết nối qua NVLink.
 *   **Thời gian:** Giai đoạn huấn luyện chính kéo dài khoảng **15 ngày** tính toán liên tục trên cấu hình phần cứng này.
-*   **Framework:** Quá trình huấn luyện phân tán được điều phối sử dụng thư viện **`accelerate` của Hugging Face**, khai thác khả năng mở rộng đa GPU hiệu quả của nó (có khả năng được cấu hình với DeepSpeed ZeRO stage 3 hoặc FSDP, theo tệp cấu hình `qwen2VL2B.yaml`).
+*   **Framework:** Quá trình huấn luyện phân tán được điều phối sử dụng thư viện **`accelerate` của Hugging Face**, khai thác khả năng mở rộng đa GPU hiệu quả của nó với FSDP ZwRO-3.
 *   **Độ chính xác & Tối ưu hóa:** Quá trình huấn luyện sử dụng độ chính xác hỗn hợp **`bfloat16`** để tối ưu hóa việc sử dụng bộ nhớ và thông lượng tính toán. **Flash Attention 2** đã được kích hoạt nhằm tăng cường hiệu quả cho cơ chế attention.
 *   **Các siêu tham số chính (Key Hyperparameters):**
     *   **Chèn vào Qwen2VL tokenizer với (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) và **mở rộng lớp embedding** tương ứng 
