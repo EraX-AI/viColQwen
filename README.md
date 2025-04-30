@@ -81,7 +81,7 @@ Việc huấn luyện mô hình `viPyloQwen` đòi hỏi yêu cầu tài nguyên
     *   **Chèn vào Qwen2VL tokenizer với (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) và **mở rộng lớp embedding** tương ứng 
     *   **Mô hình cơ sở (Base Model):** `Qwen/Qwen2-VL-2B-Instruct`
     *   **Bộ tối ưu hóa (Optimizer):** AdamW (tiêu chuẩn của Hugging Face Trainer)
-    *   **Tốc độ học (Learning Rate):** 1e-4 (với giảm tuyến tính và 5% warmup)
+    *   **Tốc độ học (Learning Rate):** 1e-4 (với giảm theo hàm cosine sau 5% warmup)
     *   **Số Epochs:** 2
     *   **Kích thước lô trên mỗi thiết bị (Batch Size per device):** 24
     *   **Số bước Tích lũy Gradient (Gradient Accumulation Steps):** 8

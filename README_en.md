@@ -81,7 +81,7 @@ The training of the `viPyloQwen` model involved a significant computational effo
     *   **Extended Qwen2VL tokenizer with new special tokens (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) and resize its embedding layer. 
     *   **Base Model:** `Qwen/Qwen2-VL-2B-Instruct`
     *   **Optimizer:** AdamW (standard with Hugging Face Trainer)
-    *   **Learning Rate:** 1e-4 (with linear decay and 5% warmup)
+    *   **Learning Rate:** 1e-4 (with cosine decay after 5% warmup)
     *   **Epochs:** 2
     *   **Batch Size (per device):** 24
     *   **Gradient Accumulation Steps:** 8
