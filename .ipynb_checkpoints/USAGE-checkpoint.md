@@ -10,7 +10,7 @@ from tqdm.auto import tqdm # Sử dụng tqdm.auto cho linh hoạt
 import time # Thêm time để đo thời gian nếu cần
 ```
 
-# --- Phần 1: Cấu hình và Khởi tạo ---
+# Phần 1: Cấu hình và Khởi tạo
 
 ```python
 # -- Cấu hình Logging --
@@ -68,7 +68,7 @@ except Exception as e:
     exit()
 ```
 
-# --- Phần 2: Tạo Embeddings cho Lưu trữ (Mô phỏng Vector DB) ---
+# Phần 2: Tạo Embeddings cho Lưu trữ (Mô phỏng Vector DB)
 
 ```python
 # -- Dữ liệu ví dụ --
@@ -105,22 +105,26 @@ for item_id, data in sample_data.items():
     # Chuẩn bị text và ảnh dựa trên loại dữ liệu
     if data_type == "text":
         text_input = data["content"]
-        # KHÔNG prefix
+        # Trường hợp này KHÔNG prefix
+        
     elif data_type == "image":
         try:
             image_input = Image.open(data["path"]).convert("RGB")
-            # KHÔNG prefix (hàm encode sẽ tự thêm <image> placeholder)
+            # Trường hợp này KHÔNG prefix (hàm encode sẽ tự thêm <image> placeholder)
+            
         except FileNotFoundError:
             logger.warning(f"Image file not found for {item_id}: {data['path']}. Skipping.")
             continue
+            
     elif data_type == "image_with_desc":
         try:
             image_input = Image.open(data["path"]).convert("RGB")
             text_input = data["text"]
-            # KHÔNG prefix
+            # Trường hợp này KHÔNG prefix
         except FileNotFoundError:
             logger.warning(f"Image file not found for {item_id}: {data['path']}. Skipping.")
             continue
+            
     elif data_type == "ocr_task":
         try:
             image_input = Image.open(data["path"]).convert("RGB")
@@ -129,6 +133,7 @@ for item_id, data in sample_data.items():
         except FileNotFoundError:
             logger.warning(f"Image file not found for {item_id}: {data['path']}. Skipping.")
             continue
+            
     elif data_type == "vqa_task":
         try:
             image_input = Image.open(data["path"]).convert("RGB")
@@ -138,6 +143,7 @@ for item_id, data in sample_data.items():
         except FileNotFoundError:
             logger.warning(f"Image file not found for {item_id}: {data['path']}. Skipping.")
             continue
+            
     else:
         logger.warning(f"Unknown data type '{data_type}' for item {item_id}. Skipping.")
         continue
@@ -177,9 +183,9 @@ if batch_ids_to_encode:
         logger.error(traceback.format_exc())
 ```
 
-# --- Phần 3: Truy vấn và So sánh ---
+# Phần 3: Truy vấn và So sánh
 
-## -- Chuẩn bị DB cho tìm kiếm --
+## Chuẩn bị DB cho tìm kiếm
 
 ```python
 db_ids = list(vector_database.keys())
