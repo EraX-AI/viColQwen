@@ -78,6 +78,7 @@ The training of the `viPyloQwen` model involved a significant computational effo
 *   **Framework:** Distributed training was orchestrated using the **Hugging Face `accelerate` library**, leveraging its capabilities for efficient multi-GPU scaling (likely configured with DeepSpeed ZeRO stage 3 or FSDP, as specified in the `qwen2VL2B.yaml` configuration file).
 *   **Precision & Optimizations:** Training utilized **`bfloat16` mixed precision** to optimize memory usage and computational throughput. **Flash Attention 2** was enabled for further efficiency gains in the attention mechanism.
 *   **Key Hyperparameters:**
+    *   **Extended Qwen2VL tokenizer with new special tokens (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) and resize its embedding layer. 
     *   **Base Model:** `Qwen/Qwen2-VL-2B-Instruct`
     *   **Optimizer:** AdamW (standard with Hugging Face Trainer)
     *   **Learning Rate:** 1e-4 (with linear decay and 5% warmup)
