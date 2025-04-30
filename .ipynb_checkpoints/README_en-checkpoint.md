@@ -114,68 +114,50 @@ This setup highlights the substantial resources required to train state-of-the-a
 ## How to Use (Conceptual Example)
 
 ```python
-import torch
+from model import ViPyloQwenEmbedder # Import lớp đã cập nhật
+from transformers import AutoProcessor
 from PIL import Image
-# Giả sử bạn đã load model và processor vào biến `embedder` và `processor`
-# embedder = ColPaLiQwenEmbedder.from_pretrained("./path/to/your/finetuned_model")
-# processor = AutoProcessor.from_pretrained("./path/to/your/finetuned_model", trust_remote_code=True) # Hoặc từ model gốc
-# embedder.processor = processor # Gán processor cho embedder nếu load riêng
-# embedder.to("cuda") # Chuyển model lên GPU
+import torch
 
-# --- Ví dụ: VQA Single Turn (e.g., Medical Image) ---
-prefix_vqa = "<vqa_single>"
-text_input_vqa = "Is there evidence of fracture in the distal radius?" # Example query
-image_input_vqa = Image.open("wrist_xray.png").convert("RGB") # Example image
+MODEL_PATH = "./path/to/your/finetuned_viPyloQwen_model"
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Gọi phương thức encode mới
-# Quan trọng: Đảm bảo text có chứa prefix
-mixed_embedding_vqa = embedder.encode(
-    text=f"{prefix_vqa} {text_input_vqa}",
-    images=image_input_vqa
-)
-print("VQA Embedding Shape:", mixed_embedding_vqa.shape) # Expected: torch.Size([1, 1024])
+# Load
+processor = AutoProcessor.from_pretrained(MODEL_PATH, trust_remote_code=True)
+model = ViPyloQwenEmbedder.from_pretrained(MODEL_PATH, trust_remote_code=True)
+model.processor = processor # Gán processor
+model.to(DEVICE)
+model.eval()
 
-# --- Ví dụ: Text Similarity ---
-prefix_sim = "<text_pair>"
-text_a = "Patient reported mild discomfort."
-text_b = "Subject experienced slight pain."
+# --- Sử dụng ---
 
-# Mã hóa từng câu riêng lẻ (vì chúng là 2 thực thể riêng biệt trong cặp)
-text_a_embedding = embedder.encode(text=f"{prefix_sim} {text_a}")
-text_b_embedding = embedder.encode(text=f"{prefix_sim} {text_b}")
+# Text đơn (không prefix)
+text_emb = model.encode(text="Nội dung văn bản cần embed.")
 
-# Tính độ tương đồng
-similarity = torch.nn.functional.cosine_similarity(text_a_embedding, text_b_embedding)
-print("Text Similarity:", similarity.item())
-print("Text A Embedding Shape:", text_a_embedding.shape) # Expected: torch.Size([1, 1024])
+# Ảnh đơn (không prefix)
+img = Image.open("my_image.jpg").convert("RGB")
+img_emb = model.encode(images=img)
 
-# --- Ví dụ: OCR (e.g., Handwritten Form) ---
-prefix_ocr = "<ocr>"
-text_input_ocr = "What is the policy number listed?" # Example query
-image_input_ocr = Image.open("handwritten_claim_form.jpg").convert("RGB") # Example image
+# Ảnh + Text mô tả (không prefix)
+desc_emb = model.encode(text="Mô tả cho ảnh này.", images=img)
 
-form_embedding_ocr = embedder.encode(
-    text=f"{prefix_ocr} {text_input_ocr}",
-    images=image_input_ocr
-)
-print("OCR Embedding Shape:", form_embedding_ocr.shape) # Expected: torch.Size([1, 1024])
+# Ảnh + Câu hỏi OCR (CÓ PREFIX)
+ocr_query = "<ocr> Đọc dòng chữ trên cùng."
+ocr_emb = model.encode(text=ocr_query, images=img)
 
-# --- Ví dụ: Mã hóa nhiều mẫu cùng lúc (batch) ---
-batch_texts = [
-    f"<vqa_single> What is shown?",
-    f"<ocr> Read the title",
-    f"<text_pair> First sentence.",
-    f"<text_pair> Second sentence, similar to first."
-]
-batch_images = [
-    Image.open("image1.jpg").convert("RGB"),
-    Image.open("document_page.png").convert("RGB"),
-    None, # text_pair không cần ảnh
-    None  # text_pair không cần ảnh
-]
+# Query Text (không prefix)
+query_text_emb = model.encode(text="Tìm kiếm thông tin liên quan.")
 
-batch_embeddings = embedder.encode(text=batch_texts, images=batch_images, batch_size=2) # Ví dụ batch_size=2
-print("Batch Embedding Shape:", batch_embeddings.shape) # Expected: torch.Size([4, 1024])
+# Query Ảnh + VQA (CÓ PREFIX)
+vqa_query = "<vqa_single> Có bao nhiêu đối tượng màu xanh lá?"
+vqa_query_emb = model.encode(text=vqa_query, images=img)
+
+print(text_emb.shape)
+print(img_emb.shape)
+print(desc_emb.shape)
+print(ocr_emb.shape)
+print(query_text_emb.shape)
+print(vqa_query_emb.shape)
 ```
 
 ---
