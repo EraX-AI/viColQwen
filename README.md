@@ -22,12 +22,13 @@ Nghiên cứu này, bao gồm việc phát triển và huấn luyện mô hình 
 
 Quan trọng hơn, thay vì sử dụng các phương pháp pooling thông thường như mean pooling hay last-token pooling, vector embedding 1D cuối cùng được trích xuất bằng **Attention Pooling**. Cơ chế này cho phép mô hình **tập trung động vào các đặc trưng thị giác và văn bản nổi bật nhất** trong chuỗi token đầu ra của bộ mã hóa trước khi chiếu (projection). Bằng cách học cách gán trọng số cao hơn cho các đặc trưng quan trọng (như vùng văn bản trong ảnh hoặc các khái niệm ngữ nghĩa chính), attention pooling hướng tới việc tạo ra các embedding 1D **giàu thông tin và tinh tế hơn** so với việc lấy trung bình đơn giản, giúp tăng cường đáng kể khả năng nắm bắt nội dung ngữ nghĩa, ngay cả từ các hình ảnh chứa văn bản. Ý tưởng cốt lõi của **Attention Pooling** như sau:
 
-    - Thay vì coi mọi thứ như nhau, hãy để mô hình tự "học" xem phần nào là QUAN TRỌNG NHẤT!
-    - Giống như khi bạn đọc một bài báo, mắt bạn sẽ tự động "chú ý" (attend) nhiều hơn vào tiêu đề, các câu chủ đề, các từ khóa chính.
-    - Attention Pooling làm điều tương tự: Nó sẽ tính toán một "điểm số chú ý" (attention score) cho mỗi token/patch trong chuỗi đầu ra của bộ mã hóa (encoder).
-    - Những token/patch nào có điểm số cao hơn được coi là quan trọng hơn.
-    - Vector tóm tắt cuối cùng sẽ được tạo ra bằng cách lấy trung bình có trọng số (weighted average) của tất cả các token/patch, trong đó những token/patch quan trọng hơn sẽ có "trọng số" (weight) lớn hơn và đóng góp nhiều hơn vào kết quả cuối cùng.
-    * Kết quả là các embedding 1024 chiều tạo điều kiện cho các ứng dụng đầu cuối mạnh mẽ như Sinh Tăng cường Truy xuất (RAG) đa phương thức, Graph RAG, tìm kiếm chéo phương thức và phân tích tài liệu phức tạp. Mặc dù được tối ưu hóa cho **tiếng Việt**, dữ liệu huấn luyện đa ngôn ngữ cho phép mô hình có khả năng **zero-shot** hiệu quả.
+*   Thay vì coi mọi thứ như nhau, hãy để mô hình tự "học" xem phần nào là QUAN TRỌNG NHẤT!
+*   Giống như khi bạn đọc một bài báo, mắt bạn sẽ tự động "chú ý" (attend) nhiều hơn vào tiêu đề, các câu chủ đề, các từ khóa chính.
+*   Attention Pooling làm điều tương tự: Nó sẽ tính toán một "điểm số chú ý" (attention score) cho mỗi token/patch trong chuỗi đầu ra của bộ mã hóa (encoder).
+*   Những token/patch nào có điểm số cao hơn được coi là quan trọng hơn.
+*   Vector tóm tắt cuối cùng sẽ được tạo ra bằng cách lấy trung bình có trọng số (weighted average) của tất cả các token/patch, trong đó những token/patch quan trọng hơn sẽ có "trọng số" (weight) lớn hơn và đóng góp nhiều hơn vào kết quả cuối cùng.
+
+Kết quả là các embedding 1024 chiều tạo điều kiện cho các ứng dụng đầu cuối mạnh mẽ như Sinh Tăng cường Truy xuất (RAG) đa phương thức, Graph RAG, tìm kiếm chéo phương thức và phân tích tài liệu phức tạp. Mặc dù được tối ưu hóa cho **tiếng Việt**, dữ liệu huấn luyện đa ngôn ngữ cho phép mô hình có khả năng **zero-shot** hiệu quả.
 
 ---
 
