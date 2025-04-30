@@ -1,5 +1,4 @@
 # viPyloQwen: Embedding Đa phương thức Thống nhất: Tối ưu Loss Linh hoạt theo Tín hiệu Tiền tố
-(Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization)
 
 **(Mô hình sắp được phát hành - Vui lòng theo dõi!)**
 
@@ -7,7 +6,7 @@
 
 ## Tóm tắt
 
-Các hệ thống đa phương thức hiện đại thường đối mặt với thách thức do sự phức tạp của việc quản lý các không gian embedding riêng biệt cho nhiều loại dữ liệu khác nhau (như văn bản, hình ảnh). Điều này có thể dẫn đến sự phân mảnh trong biểu diễn, quy trình truy xuất cồng kềnh và hạn chế trong khả năng suy luận chéo phương thức. Chúng tôi giới thiệu **viPyloQwen**, một mô hình embedding đa phương thức tiên tiến, được thiết kế để tạo ra các **biểu diễn thống nhất, chiều cao** cho hình ảnh, văn bản và các kết hợp tùy ý của chúng trong một không gian vector duy nhất, gắn kết.
+Các hệ thống đa phương thức hiện đại thường đối mặt với thách thức do sự phức tạp của việc quản lý các không gian embedding riêng biệt cho nhiều loại dữ liệu khác nhau (như văn bản, hình ảnh). Điều này có thể dẫn đến sự phân mảnh trong biểu diễn, quy trình truy xuất cồng kềnh và hạn chế trong khả năng suy luận chéo phương thức. Chúng tôi giới thiệu **viPyloQwen**, một mô hình embedding đa phương thức tiên tiến, được thiết kế để tạo ra các **biểu diễn thống nhất, không gian đa chiều** cho hình ảnh, văn bản và các kết hợp tùy ý của chúng trong một không gian vector duy nhất, gắn kết.
 
 Được xây dựng trên kiến trúc vision-language mạnh mẽ **Qwen2-VL 2B**, viPyloQwen sử dụng một framework học tương phản (contrastive learning) tinh vi. Mặc dù lấy cảm hứng từ các phương pháp như ColPali, viPyloQwen mang đến những cải tiến đáng kể, đặc biệt qua phương pháp huấn luyện độc đáo. Mô hình được huấn luyện trên một **tập dữ liệu quy mô lớn, cực kỳ đa dạng, vượt quá 11 triệu mẫu**. Tập dữ liệu được tuyển chọn tỉ mỉ này tích hợp một cách chiến lược các cặp tương đồng ngữ nghĩa văn bản-văn bản phức tạp (với điểm số liên tục), dữ liệu hướng dẫn phức tạp, và có lẽ đặc biệt nhất, một bộ sưu tập lớn các tình huống Nhận dạng Ký tự Quang học (OCR) và Trả lời Câu hỏi Trực quan (VQA) đa hình ảnh.
 
