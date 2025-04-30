@@ -1,213 +1,93 @@
-# viColQwen: High-Performance Unified Embeddings for Advanced Multimodal Understanding
-
-**[Model Release Pending - Stay Tuned!]**
+**Model Identifier:** viColQwen-1024-v1.0
 
 ## Abstract
 
-The landscape of Retrieval-Augmented Generation (RAG) and multimodal AI is often hampered by the complexity of managing separate embedding spaces for different modalities (e.g., text via SentenceTransformers, images via ViT). This necessitates multiple vector databases, intricate query strategies, and often suboptimal cross-modal retrieval. We introduce **viColQwen**, a state-of-the-art multimodal embedding model designed to overcome these limitations by generating **unified, high-dimensional representations** for images, texts, and their arbitrary combinations within a single vector space. Built upon the powerful **Qwen2-VL 2B** architecture and trained using contrastive learning inspired by ColPali, viColQwen leverages a massive, uniquely diverse dataset of over **11 million samples**. This dataset merges challenging text-text similarity pairs, complex instructions, multi-image OCR, and multi-image VQA tasks (primarily Vietnamese, with substantial English and Chinese data). The resulting 1024-dimensional embeddings capture fine-grained semantic and visual nuances, drastically simplifying and enhancing downstream applications like multimodal RAG, Graph RAG, cross-modal search, and complex document understanding, paving the way for more coherent and powerful multimodal AI systems.
+Các hệ thống đa phương thức hiện đại thường gặp trở ngại bởi sự phức tạp của việc quản lý không gian embedding riêng biệt cho từng loại dữ liệu (văn bản, hình ảnh), dẫn đến sự phân mảnh trong biểu diễn, quy trình truy xuất phức tạp và hạn chế trong khả năng suy luận chéo phương thức. Chúng tôi giới thiệu **viColQwen**, một mô hình embedding đa phương thức tiên tiến, được thiết kế để tạo ra các biểu diễn **thống nhất, chiều cao** cho hình ảnh, văn bản và các kết hợp tùy ý của chúng trong một không gian vector duy nhất. Dựa trên kiến trúc vision-language mạnh mẽ **Qwen2-VL 2B**, viColQwen áp dụng một phương pháp học tương phản (contrastive learning) tinh vi, lấy cảm hứng từ ColPali nhưng được cải tiến đáng kể. Mô hình được huấn luyện trên một tập dữ liệu **đa dạng quy mô lớn (hơn 11 triệu mẫu)**, tích hợp một cách chiến lược các cặp tương đồng ngữ nghĩa văn bản-văn bản phức tạp (với điểm số liên tục), dữ liệu hướng dẫn phức tạp, tác vụ OCR đa hình ảnh và VQA đa hình ảnh. Điểm độc đáo cốt lõi nằm ở **chiến lược tối ưu hóa tổn thất hỗn hợp động (dynamic mixed-loss optimization)**, được dẫn hướng bởi các **tiền tố nhiệm vụ cụ thể (task-specific prefixes)**. Các tiền tố này (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) được thêm vào đầu vào để báo hiệu loại dữ liệu và kích hoạt một **hàm loss tương ứng** (bao gồm InfoNCE, Triplet Loss, MSE, và tối đa hóa độ tương đồng cosine) được thiết kế riêng cho từng loại mẫu. Embedding cuối cùng được trích xuất bằng phương pháp **mean pooling**, thu giữ thông tin ngữ nghĩa và thị giác một cách toàn diện. Kết quả là các embedding 1024 chiều thể hiện sự hiểu biết ngữ nghĩa và hình ảnh sâu sắc, giúp đơn giản hóa và nâng cao đáng kể các ứng dụng như RAG đa phương thức, Graph RAG, tìm kiếm chéo phương thức và phân tích tài liệu phức tạp, đặc biệt trong bối cảnh ngôn ngữ Việt.
 
 ---
 
 ## Model Details
 
-*   **Base Architecture:** `Qwen2-VL 2B` - A robust foundation model renowned for its strong vision-language capabilities.
-*   **Core Technique:** Contrastive Learning (ColPali-inspired). Learns a unified embedding space by mapping related multimodal inputs closer and pushing dissimilar inputs apart.
-*   **Embedding Dimension:** `1024` - Captures rich, detailed information from both visual and textual modalities in a high-dimensional space.
-*   **Output:** A **single** embedding vector representing the semantic content of one or more images, one or more texts, or interleaved image-text inputs.
+*   **Base Architecture:** `Qwen/Qwen2-VL-2B` - Vision-Language Model (VLM) nền tảng.
+*   **Embedding Strategy:** Không gian Embedding Thống nhất qua Học Tương phản Động được Dẫn hướng bởi Tiền tố (Prefix-Guided Dynamic Contrastive Learning).
+*   **Embedding Dimension:** `1024`.
+*   **Pooling Strategy:** **Mean Pooling**. Embedding cuối cùng $e \in \mathbb{R}^{1024}$ được tính bằng cách lấy trung bình các trạng thái ẩn $H = [h_1, h_2, ..., h_N] \in \mathbb{R}^{N \times d}$ từ lớp cuối cùng của bộ mã hóa Qwen2-VL, sau đó chuẩn hóa L2:
+    $$ e = \frac{\bar{h}}{\|\bar{h}\|_2} \quad \text{với} \quad \bar{h} = \frac{1}{N} \sum_{i=1}^{N} h_i $$
+*   **Input Representation:** Dữ liệu đầu vào (văn bản, hình ảnh PIL) được xử lý bởi bộ xử lý của Qwen-VL. Hình ảnh được biểu diễn bằng token `<image>`. Quan trọng hơn, *trước* phần nội dung văn bản chính, một **tiền tố nhiệm vụ cụ thể** được thêm vào để báo hiệu loại dữ liệu:
+    *   `<text_pair>`: Cho cặp văn bản với điểm tương đồng.
+    *   `<instr>`: Cho dữ liệu hướng dẫn (instruction-response).
+    *   `<ocr>`: Cho dữ liệu OCR/OCQ.
+    *   `<vqa_multi>`: Cho VQA đa lượt.
+    *   `<vqa_single>`: Cho VQA đơn lượt.
+*   **Output:** Một vector dày `1024-d` duy nhất $e$ biểu diễn nội dung ngữ nghĩa và/hoặc thị giác của đầu vào.
 
-## Training Paradigm: The Foundation of Robustness
+---
 
-viColQwen's strength lies in its sophisticated training strategy and diverse data mixture:
+## Training Paradigm
 
-1.  **Heterogeneous Data Integration (Over 11 Million Samples):**
-    *   **Text-Text Semantic Similarity (5.6M samples):** Pairs of texts with continuous similarity scores (0.0-1.0), specifically curated to include challenging hard-negative and hard-positive examples across multiple languages, teaching nuanced semantic distinction.
-    *   **Instruction Following (0.6M samples):** Standard LLM instructions (single/multi-turn) enhance contextual understanding and task adaptability.
-    *   **Multi-Image OCR (2.5M samples):** Single-turn OCR tasks involving 1-5 images ground textual understanding in visually presented text.
-    *   **Multi-Image VQA (2.5M samples):** Single/multi-turn VQA tasks with 1-5 images foster deep visual reasoning and question-answering capabilities within context.
-    *   OCR/VQA are **very diversed** as well, including captioning, radiology MRI/CT scan prediction, very complex multi layers json-generated extraction, tables, maths, charts, hand-writing and many turns complex VQA 
-2.  **Mixed Loss Optimization:** Employs a combination of losses tailored to each data type (e.g., similarity regression, instruction prediction) alongside the core contrastive objective (InfoNCE and TripletLoss) for multifaceted learning.
-3.  **Scale and Multilinguality:** Primarily trained on Vietnamese, with substantial English and Chinese data, enabling strong performance in Vietnamese and facilitating cross-lingual transfer.
+Sức mạnh của viColQwen đến từ sự kết hợp giữa tập dữ liệu đa dạng và chiến lược tối ưu hóa độc đáo:
+
+1.  **Heterogeneous Dataset (Hơn 11 Triệu Mẫu):** Tích hợp 4 loại dữ liệu chính, liên kết với các tiền tố:
+    *   **Text-Text Semantic Similarity (`<text_pair>`, ~5.6M):** Cặp $(t_a, t_b)$ với điểm số $s \in [0, 1]$.
+    *   **Instruction Following (`<instr>`, ~0.6M):** Cặp (instruction $i$, response $r$).
+    *   **Multi-Image OCR/OCQ (`<ocr>`, ~2.5M):** Bộ ba $(\{\text{image(s)}\}_q, \text{query } q, \text{answer } a)$.
+    *   **Multi-Image VQA (`<vqa_single>`, `<vqa_multi>`, ~2.5M):** Bộ ba $(\{\text{image(s)}\}_q, \text{question } q, \text{answer } a)$.
+    Tập trung vào tiếng Việt (vi), cùng với tiếng Anh (en) và Trung (zh).
+
+2.  **Prefix-Guided Dynamic Mixed-Loss Optimization:**
+    *   Mỗi mẫu trong batch được gắn tiền tố nhiệm vụ tương ứng.
+    *   Dựa trên tiền tố, một hàm loss cụ thể $\mathcal{L}_{\text{prefix}}$ được **kích hoạt và áp dụng** cho cặp embedding $(e_a, e_b)$ của mẫu đó.
+    *   Tổn thất tổng của batch là trung bình của các tổn thất riêng lẻ:
+        $$ \mathcal{L}_{\text{batch}} = \frac{1}{B} \sum_{i=1}^{B} \mathcal{L}_{\text{prefix}(i)}(e_{a,i}, e_{b,i}, \text{params}_i) $$
+    *   **Các hàm loss được sử dụng:**
+        *   **Cho `<text_pair>`:** Kết hợp InfoNCE đối xứng và MSE Regression (so khớp điểm tương đồng dự đoán với điểm thật).
+        *   **Cho `<instr>`:** Kết hợp InfoNCE đối xứng và Direct Cosine Similarity Maximization (khuyến khích $e_a \cdot e_b$ tiến tới 1).
+        *   **Cho `<ocr>`, `<vqa_single>`, `<vqa_multi>`:** Kết hợp InfoNCE đối xứng và Triplet Margin Loss (đảm bảo khoảng cách giữa cặp dương và âm khó nhất, với margin có thể điều chỉnh cho multi-turn).
+
+---
 
 ## Key Features & Advantages
 
-*   ✅ **Unified Multimodal Embedding:** A single vector represents images, text, or combinations, eliminating the need for separate models and vector stores.
-*   ✅ **Simplified Multimodal RAG/Search:** Query with text, image, or both to retrieve relevant multimodal information from a single index, streamlining complex retrieval pipelines.
-*   ✅ **Enhanced Cross-Modal Understanding:** Joint training fosters embeddings that capture deeper correlations between visual and textual concepts than separate models allow.
-*   ✅ **High-Dimensional Nuance:** 1024-d embeddings capture fine-grained details crucial for complex tasks.
-*   ✅ **Multi-Image Aware:** Natively handles contexts involving multiple images (up to 5 tested).
-*   ✅ **Robust Performance:** Data diversity (similarity, instructions, OCR, VQA) leads to versatile and robust embeddings.
-*   ✅ **Strong Vietnamese & Multilingual Capabilities:** Optimized for Vietnamese (vi) with significant English (en) and Chinese (zh) understanding.
-*   ✅ **Foundation for Next-Gen AI:** Ideal for building advanced multimodal RAG, Graph RAG, semantic search, classification, and analysis systems.
-*   ✅ **Extensible:** The core approach can potentially be extended to incorporate other modalities like video or audio in the future.
+*   ✅ **Unified Multimodal Embedding:** Không gian vector đơn nhất cho mọi loại đầu vào.
+*   ✅ **Prefix-Guided Training:** Cho phép mô hình chuyên biệt hóa xử lý từng loại dữ liệu (similarity, instruction, OCR, VQA) thông qua các tiền tố và loss tương ứng.
+*   ✅ **Simplified Multimodal RAG/Search:** Truy vấn đơn giản trên một chỉ mục vector duy nhất.
+*   ✅ **Enhanced Cross-Modal Understanding:** Huấn luyện phối hợp trên dữ liệu đa dạng thúc đẩy sự hiểu biết sâu sắc về mối liên hệ visual-textual.
+*   ✅ **High-Dimensional Nuance:** Embedding 1024-d nắm bắt chi tiết tinh vi.
+*   ✅ **Multi-Image Aware:** Xử lý tự nhiên ngữ cảnh nhiều hình ảnh.
+*   ✅ **Robust Performance:** Dữ liệu và loss đa dạng tạo ra embedding linh hoạt, mạnh mẽ.
+*   ✅ **Strong Vietnamese & Multilingual Focus:** Tối ưu cho tiếng Việt, hỗ trợ tốt tiếng Anh/Trung.
+*   ✅ **Foundation for Advanced AI:** Nền tảng lý tưởng cho các hệ thống AI đa phương thức thế hệ tiếp theo.
 
-## How to Use (Preliminary Example)
+---
 
-*(Note: The `ColPaLiEvaluator` class and specific method names are based on provided snippets and may evolve in the final release.)*
-
-**1. Setup & Initialization:**
+## How to Use (Conceptual Example)
 
 ```python
-# Ensure necessary libraries are installed
-# pip install transformers torch Pillow accelerate bitsandbytes # Example dependencies
-
 import torch
 from PIL import Image
-import os
-# Replace with actual import path upon release
-from colpali_evaluator import ColPaLiEvaluator
+# Assume ViColQwenEmbedder class available after release
+# from vicolqwen_embedder import ViColQwenEmbedder
 
-# Initialize the evaluator (load the model)
-CHECKPOINT_DIR = "./path/to/viColQwen/checkpoints/" # IMPORTANT: Set this path
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-EMBED_DIM = 1024 # Should match the trained model
+# embedder = ViColQwenEmbedder(checkpoint_path="./path/to/viColQwen/", device="cuda")
 
-evaluator = ColPaLiEvaluator(
-    checkpoint_path=CHECKPOINT_DIR,
-    embed_dim=EMBED_DIM,
-    device=DEVICE
-)
-print(f"Evaluator initialized on device: {evaluator.device}")
-```
+# --- Example: VQA Single Turn ---
+# Note: The embedder's encode method should handle prefix internally,
+# or you might need to prepend it manually if using the base model directly.
+prefix_vqa = "<vqa_single>"
+text_input = "What color is the object on the left?"
+image_input = Image.open("image.jpg").convert("RGB")
 
-**2. Generating Embeddings for Images OR Texts:**
+# Conceptual encoding call
+# mixed_embedding = embedder.encode(text=f"{prefix_vqa} {text_input}", images=[image_input])
+# print(mixed_embedding.shape) # torch.Size([1, 1024])
 
-```python
-# Example Images (ensure RGB format)
-try:
-    img1 = Image.open("path/to/your/image1.jpg").convert("RGB")
-    img2 = Image.open("path/to/your/image2.png").convert("RGB")
-    images = [img1, img2]
-    image_embeddings = evaluator.get_image_embeddings(images)
-    print("Image Embeddings Shape:", image_embeddings.shape) # Should be [2, 1024]
-except FileNotFoundError:
-    print("Image file(s) not found. Skipping image embedding generation.")
-    image_embeddings = None
+# --- Example: Text Similarity ---
+prefix_sim = "<text_pair>"
+text_a = "The cat sat on the mat."
+text_b = "A feline rested upon the rug."
 
-# Example Text Queries
-queries = [
-    "Mô tả cấu trúc tổ chức của bộ phận R&D.",
-    "Provide a breakdown of last year's financial performance."
-]
+# text_a_embedding = embedder.encode(text=f"{prefix_sim} {text_a}")
+# text_b_embedding = embedder.encode(text=f"{prefix_sim} {text_b}")
 
-# Get text embeddings
-query_embeddings = evaluator.get_query_embeddings(queries)
-print("Query Embeddings Shape:", query_embeddings.shape) # Should be [2, 1024]
-
-# Calculate similarity scores (if both embeddings were generated)
-# The evaluator.score method likely computes cosine similarity or dot product
-if image_embeddings is not None and query_embeddings is not None:
-    similarity_scores = evaluator.score(query_embeddings, image_embeddings)
-    print("Similarity Scores (Query vs. Image):\n", similarity_scores)
-    # Example output: tensor([[score_q1_img1, score_q1_img2],
-    #                         [score_q2_img1, score_q2_img2]])
-```
-
-**3. Generating Embeddings for Mixed Image(s) + Text(s):**
-
-*This demonstrates the principle. The final API might offer a more direct method.*
-
-```python
-# Example Mixed Input
-text_input = "Dựa vào hình ảnh này, hãy tóm tắt các điểm chính."
-try:
-    image_input = Image.open("path/to/relevant_document_page.jpg").convert("RGB")
-except FileNotFoundError:
-    print("Mixed input image not found. Skipping mixed embedding generation.")
-    image_input = None
-
-if image_input:
-    # Illustrative functions showing potential internal logic or helper usage
-    # (These might be methods of the evaluator class in the final release)
-    def process_multimodal_input(evaluator, text, image, image_base_path=""):
-        """Prepares combined text+image input for the model (Illustrative)."""
-        if isinstance(image, str):
-            img_path = os.path.join(image_base_path, image)
-            pil_image = Image.open(img_path).convert('RGB')
-        elif isinstance(image, Image.Image):
-            pil_image = image.convert('RGB') # Ensure RGB
-        else:
-            raise ValueError(f"Unsupported image type: {type(image)}")
-
-        # Ensure text contains the image token placeholder (model-specific)
-        if "<image>" not in text:
-            text = f"<image>\n{text}" # Prepend or append based on model training
-
-        # Use the model's processor
-        inputs = evaluator.processor(
-            text=[text], images=[pil_image], padding="longest", return_tensors="pt"
-        )
-
-        # Add/rename keys required by the specific model architecture
-        inputs["has_image_a"] = torch.tensor([True]) # Example flag
-        if "pixel_values" in inputs:
-            inputs["pixel_values_a"] = inputs.pop("pixel_values")
-        if "input_ids" in inputs:
-            inputs["input_ids_a"] = inputs.pop("input_ids")
-        if "attention_mask" in inputs:
-            inputs["attention_mask_a"] = inputs.pop("attention_mask")
-        # Add other necessary keys based on the model's forward signature
-
-        return inputs
-
-    def get_multimodal_embedding(evaluator, text, image, image_base_path=""):
-        """Gets embedding for a text+image combination (Illustrative)."""
-        inputs = process_multimodal_input(evaluator, text, image, image_base_path)
-        inputs = {k: v.to(evaluator.device) if isinstance(v, torch.Tensor) else v
-                  for k, v in inputs.items()}
-
-        with torch.no_grad():
-            # CRITICAL: The exact method call depends on the final implementation.
-            # It might be get_image_embeddings, get_multimodal_embeddings, or model(**inputs)
-            # This example uses get_image_embeddings based on the user prompt, assuming it's overloaded.
-            # Check documentation/code upon release.
-            outputs = evaluator.get_image_embeddings(**inputs) # Or appropriate method call
-            # The embedding might be the direct output or accessed via a key (e.g., outputs.embedding)
-            embedding = outputs
-
-        return embedding.cpu() # Return embedding on CPU
-
-    # --- Generate the mixed embedding ---
-    mixed_embedding = get_multimodal_embedding(evaluator, text_input, image_input)
-    print("Mixed Modality Embedding Shape:", mixed_embedding.shape) # Should be [1, 1024]
-
-    # This 'mixed_embedding' can now be used in similarity searches against
-    # image_embeddings, query_embeddings, or other mixed_embeddings in the SAME vector DB.
-```
-
-## Potential Applications
-
-Leveraging viColQwen's unified embeddings fundamentally enhances multimodal tasks:
-
-*   **Superior Multimodal RAG:** Retrieve image(s) *and/or* text or even multi-turn instruction, using a single query vector, providing richer, coherent context to LLMs than disjoint systems.
-*   **Simplified Graph RAG:** Build knowledge graphs with nodes representing images, text, multi-turn instruction, or multimodal documents, queryable via unified embeddings for complex relationship discovery.
-*   **Effective Cross-Modal Search:** Robustly find images from text queries, text from image queries, or similar image-text pairs using standard vector search.
-*   **Advanced Document Analysis:** Understand complex documents by capturing layout, images, and OCR'd text within one representation for clustering, classification, or search.
-*   **Contextual Visual Search:** Find visually similar images, refined by accompanying textual context embedded simultaneously.
-
-## Development Status & Future Work
-
-*   This repository is under active development. Model checkpoints, refined code, comprehensive usage examples, and benchmarks will be released soon.
-*   Ongoing work includes extensive benchmarking on Vietnamese and cross-lingual multimodal tasks, further model scaling exploration, and potential video integration.
-*   Community feedback and contributions will be welcomed upon release.
-
-**Stay tuned for the official model release! We believe viColQwen represents a significant step towards more intuitive and powerful multimodal AI.** ✨🚀
-
-## License
-
-*   The licensing details will be announced upon release.
-*   A commercial license option will be available. For inquiries regarding commercial use, please contact us at **nguyen@hatto.com**.
-
-## Citation
-
-*(Please cite this repository URL until a formal publication is available)*
-
-```bibtex
-@misc{vicolqwen_github_2024,
-  author       = {Steve Nguyen Anh Nguyen and the EraX AI Team},
-  title        = {viColQwen: High-Performance Unified Embeddings for Advanced Multimodal Understanding},
-  year         = {2024},
-  publisher    = {GitHub},
-  journal      = {GitHub repository},
-  howpublished = {\url{https://github.com/EraX-AI/viColQwen}} % Replace with actual final URL
-}
-```
+# similarity = torch.nn.functional.cosine_similarity(text_a_embedding, text_b_embedding)
+# print(similarity)
