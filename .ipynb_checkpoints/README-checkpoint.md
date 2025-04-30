@@ -6,7 +6,7 @@
 
 **(Mô hình sắp được phát hành - Vui lòng theo dõi!)**
 
-[[English Version](README_en.md)] | **Tiếng Việt**
+[[English](README_en.md)] | **Tiếng Việt**
 
 ## Tóm tắt
 
