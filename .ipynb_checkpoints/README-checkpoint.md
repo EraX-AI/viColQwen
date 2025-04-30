@@ -36,7 +36,7 @@ viPyloQwen's robustness and versatility stem from the synergistic combination of
 
 1.  **Heterogeneous and Rich Dataset (Over 11 Million Samples):** The training corpus integrates multiple data modalities and task types, linked via the input prefixes:
     *   **Text-Text Semantic Similarity (`<text_pair>`, ~5.6M):** Pairs $(t_a, t_b)$ with similarity scores $s \in [0, 1]$, fostering nuanced textual understanding.
-    *   **Instruction Following (`<instr>`, ~0.6M):** Pairs (instruction $i$, response $r$), enhancing contextual reasoning and task execution representation.
+    *   **Instruction Following (`<instr>`, ~0.6M):** Pairs (single and multi-turns instruction $i$, response $r$), enhancing contextual reasoning and task execution representation.
     *   **Diverse Multi-Image OCR/OCQ (`<ocr>`, ~2.5M):** This category goes far beyond simple document text. It includes a wide spectrum of visual text recognition tasks on 1-5 images per sample, such as:
         *   Street scene captioning and text recognition.
         *   Mathematical document understanding (formulas, diagrams).
@@ -44,7 +44,7 @@ viPyloQwen's robustness and versatility stem from the synergistic combination of
         *   Chart and diagram analysis.
         *   Handwriting recognition (e.g., invoices, insurance claims forms, accident reports).
         *   Recognition of common Vietnamese documents (e.g., National ID cards - CCCD, driver's licenses).
-    *   **Complex Multi-Image VQA (`<vqa_single>`, `<vqa_multi>`, ~2.5M):** These tasks, also using 1-5 images, demand deeper visual reasoning integrated with textual queries. The data spans:
+    *   **Complex Multi-Image VQA (`<vqa_single>`, `<vqa_multi>`, ~2.5M):** These tasks, single and multi-turnsVQA, also using 1-5 images, demand deeper visual reasoning integrated with textual queries. The data spans:
         *   General visual question answering across various scenes.
         *   Complex table and chart interpretation requiring reasoning.
         *   **Specialized Medical Imaging Analysis (~0.5M samples):** A significant subset dedicated to radiology OCR and VQA. This involves analyzing diverse medical scans (dermatology images, X-rays, CT, MRI) for diagnostic question answering related to critical health areas including skin, bone, heart, lung, brain, and dental conditions.
