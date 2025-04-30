@@ -1,8 +1,8 @@
+  <img src="https://huggingface.co/erax-ai/EraX-Translator-V1.0/resolve/main/erax-gmobile.png?download=true" alt="Logo" width="400">
 <p align="left">
-  <img src="https://huggingface.co/erax-ai/EraX-Translator-V1.0/resolve/main/erax-gmobile.png?download=true" alt="Logo">
 </p>
 
-# viPolyQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization
+# viPolyQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization with Attention Pooling
 
 [[Tiếng Việt](README.md)] | **English**
 
@@ -10,108 +10,101 @@
 
 ## Abstract
 
-Modern multimodal systems often face challenges due to the complexity of managing separate embedding spaces for diverse data types (e.g., text, images). This can lead to representational fragmentation, cumbersome retrieval pipelines, and limitations in cross-modal reasoning. 
-
-We introduce **viPolyQwen**, an advanced multimodal embedding model designed to generate **high-dimensional, unified representations** for images, text, and their arbitrary combinations within a single, cohesive vector space. We called it Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization (hence viPolyQwen)
+Modern multimodal systems often face challenges due to the complexity of managing separate embedding spaces for diverse data types (e.g., text, images), leading to representational fragmentation and suboptimal cross-modal reasoning. We introduce **viPolyQwen**, an advanced multimodal embedding model generating **high-dimensional, unified representations** for images, text, and their combinations within a single vector space. Its full name reflects its core approach: **Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization**, built on **Qwen** architecture.
 
 This research, including the development and training of the viPolyQwen model, was conducted with close collaboration from **the AI technology team at Gtel Mobile JSC (GMobile)**. Their technical expertise and collaborative support were crucial throughout the research process and model training.
 
-Built upon the powerful **Qwen2-VL 2B** vision-language architecture, viPolyQwen employs a sophisticated contrastive learning framework. While inspired by approaches like ColPali, viPolyQwen introduces significant enhancements, particularly through its unique training methodology. The model is trained on a **large-scale, exceptionally diverse dataset exceeding 11 million samples**. This meticulously curated dataset strategically integrates challenging text-text semantic similarity pairs (with continuous scores), complex instruction-following data, and perhaps most distinctively, a vast collection of multi-image Optical Character Recognition (OCR) and Visual Question Answering (VQA) scenarios.
+Built upon the powerful **Qwen2-VL 2B-Instruct** architecture, viPolyQwen employs a sophisticated contrastive learning framework trained on a **large-scale, exceptionally diverse dataset (>11M samples)**. This dataset integrates text-similarity pairs, instruction-following data, and extensive multi-image OCR and VQA scenarios (including documents, charts, handwriting, and specialized medical images).
 
-The core algorithmic innovation lies in viPolyQwen's **prefix-guided dynamic mixed-loss optimization strategy**. Task-specific prefixes (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) are prepended to the input, serving as cues to signal the data type. This mechanism **dynamically triggers a corresponding, tailored loss function** (including InfoNCE, Triplet Loss, MSE, and direct cosine similarity maximization) specifically designed for each sample type.
+The core algorithmic innovation lies in its **prefix-guided dynamic mixed-loss optimization strategy**. Task-specific prefixes (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) guide the model by signaling the data type, dynamically triggering a **tailored loss function** (InfoNCE, Triplet, MSE, Cosine Similarity) for each sample.
 
-Final embeddings are extracted using **mean pooling** over the encoder's output tokens, ensuring comprehensive capture of semantic and visual information. The resulting 1024-dimensional embeddings, derived from this rich data mixture and unique training strategy, exhibit nuanced semantic and visual understanding. This significantly simplifies and enhances downstream applications such as multimodal Retrieval-Augmented Generation (RAG), Graph RAG, cross-modal search, and complex document analysis. While demonstrating particularly strong performance in **Vietnamese** due to data focus, the model's multilingual training data (including substantial English and Chinese) facilitates effective zero-shot transfer capabilities to other languages.
+Crucially, instead of standard mean or last-token pooling, final 1D embeddings are extracted using **Attention Pooling**. This mechanism allows the model to **dynamically focus on the most salient visual and textual features** within the encoder's output tokens before projection. By learning to weight important features (like text regions within an image or key semantic concepts) higher, attention pooling aims to create richer, more nuanced 1D embeddings compared to simple averaging, significantly enhancing the model's ability to capture semantic content, even from images containing text.
+
+The resulting 1024-dimensional embeddings facilitate robust downstream applications like multimodal RAG, Graph RAG, cross-modal search, and document analysis. While optimized for **Vietnamese**, its multilingual training data enables effective zero-shot capabilities.
 
 ---
 
 ## Model Details
 
 *   **Base Architecture:** `Qwen/Qwen2-VL-2B-Instruct` - The foundational Vision-Language Model (VLM).
-*   **Embedding Strategy:** Unified Embedding Space via Prefix-Guided Dynamic Contrastive Learning.
+*   **Embedding Strategy:** Unified Embedding Space via Prefix-Guided Dynamic Contrastive Learning with **Attention Pooling**.
 *   **Embedding Dimension:** `1024`.
-*   **Pooling Strategy:** **Mean Pooling**. The final embedding vector is obtained by averaging the hidden states of all output tokens from the final layer of the Qwen2-VL encoder, followed by L2 normalization. This aggregates information across the entire input sequence (text tokens and image patch tokens).
-*   **Input Representation:** Input data (text strings, PIL Images) is processed by the Qwen-VL processor. Images are represented by the `<image>` token. Crucially, a **task-specific prefix** is prepended to the main textual input to signal the data type:
-    *   `<text_pair>`: For text similarity pairs with continuous scores.
-    *   `<instr>`: For instruction-following data (instruction-response pairs).
-    *   `<ocr>`: For OCR/OCQ data (image(s)+query -> answer).
-    *   `<vqa_multi>`: For multi-turn VQA (image(s)+question -> answer).
-    *   `<vqa_single>`: For single-turn VQA (image(s)+question -> answer).
-*   **Output:** A single `1024-d` dense vector representing the semantic and/or visual content of the input.
+*   **Pooling Strategy:** **Attention Pooling.** This is a key differentiator. Instead of simple averaging (mean pooling) or selecting the last token, viPolyQwen employs a *learned attention mechanism* over the final hidden states sequence (representing both text tokens and image patches).
+    *   It calculates attention scores based on the relevance of each hidden state to the overall context.
+    *   It assigns higher weights to more informative states (e.g., specific text regions in an image, key visual objects, important semantic tokens).
+    *   It computes a *weighted average* based on these attention weights.
+    *   **Benefit:** This allows the model to create a more contextually relevant and nuanced 1D representation by focusing on salient features, significantly improving the capture of core semantic and visual essence compared to uniform averaging. This is particularly beneficial for representing images containing text or complex visual structures like charts and tables in a single vector.
+*   **Input Representation:** Input data (text strings, PIL Images) is processed by the Qwen-VL processor. Images are represented by the `<image>` token. Crucially, a **task-specific prefix** is prepended to the main textual input during *training* to signal the data type and guide the loss calculation:
+    *   `<text_pair>`: For text similarity pairs.
+    *   `<instr>`: For instruction-following data.
+    *   `<ocr>`: For OCR/OCQ data.
+    *   `<vqa_multi>`: For multi-turn VQA.
+    *   `<vqa_single>`: For single-turn VQA.
+    *(Note: For general inference/embedding, prefixes are typically omitted unless querying a specific task like OCR/VQA - see Usage Guide)*.
+*   **Output:** A single `1024-d` dense, L2-normalized vector representing the input.
 
 ---
 
 ## Training Paradigm
 
-viPolyQwen's robustness and versatility stem from the synergistic combination of its unique optimization strategy and its exceptionally diverse training data:
+viPolyQwen's robustness stems from its unique optimization strategy and diverse training data:
 
-1.  **Heterogeneous and Rich Dataset (Over 11 Million Samples):** The training corpus integrates multiple data modalities and task types, linked via the input prefixes:
-    *   **Text-Text Semantic Similarity (`<text_pair>`, ~5.6M):** Pairs $(t_a, t_b)$ with similarity scores $s \in [0, 1]$, fostering nuanced textual understanding.
-    *   **Instruction Following (`<instr>`, ~0.6M):** Pairs (single and multi-turns instruction $i$, response $r$), enhancing contextual reasoning and task execution representation.
-    *   **Diverse Multi-Image OCR/OCQ (`<ocr>`, ~2.5M):** This category goes far beyond simple document text. It includes a wide spectrum of visual text recognition tasks on 1-5 images per sample, such as:
-        *   Street scene captioning and text recognition.
-        *   Mathematical document understanding (formulas, diagrams).
-        *   Text and image interplay in general documents.
-        *   Chart and diagram analysis.
-        *   Handwriting recognition (e.g., invoices, insurance claims forms, accident reports).
-        *   Recognition of common Vietnamese documents (e.g., National ID cards - CCCD, driver's licenses).
-    *   **Complex Multi-Image VQA (`<vqa_single>`, `<vqa_multi>`, ~2.5M):** These tasks, single and multi-turns VQA, also using 1-5 images, demand deeper visual reasoning integrated with textual queries. The data spans:
-        *   General visual question answering across various scenes.
-        *   Complex table and chart interpretation requiring reasoning.
-        *   **Specialized Medical Imaging Analysis (~0.5M samples):** A significant subset dedicated to radiology OCR and VQA. This involves analyzing diverse medical scans (dermatology images, X-rays, CT, MRI) for diagnostic question answering related to critical health areas including skin, bone, heart, lung, brain, and dental conditions.
-    *   **Language Distribution:** While the dataset predominantly features **Vietnamese** content to ensure strong performance in this context, it strategically incorporates substantial **English** and **Chinese** samples across all categories. This multilingual foundation is crucial for enabling the model's effective **zero-shot generalization** to other unseen languages.
+1.  **Heterogeneous and Rich Dataset (>11M Samples):** (Description of the diverse dataset components - text-similarity, instructions, OCR, VQA, medical - remains the same as previous version).
+    *   **Language Distribution:** Predominantly **Vietnamese**, with substantial **English** and **Chinese** samples, fostering strong zero-shot generalization.
 
 2.  **Prefix-Guided Dynamic Mixed-Loss Optimization:**
-    *   As described previously, each sample's prefix dynamically selects a tailored loss function from a pre-defined suite.
+    *   During training, each sample's prefix signals the appropriate loss function.
     *   **Loss Function Suite Applied:**
         *   `<text_pair>`: Symmetric InfoNCE + MSE Similarity Regression.
         *   `<instr>`: Symmetric InfoNCE + Direct Cosine Similarity Maximization.
-        *   `<ocr>`, `<vqa_single>`, `<vqa_multi>`: Symmetric InfoNCE + Triplet Margin Loss (margin potentially adjusted for multi-turn).
+        *   `<ocr>`, `<vqa_single>`, `<vqa_multi>`: Symmetric InfoNCE + Triplet Margin Loss.
+    *   The final 1D embeddings used for these loss calculations are generated via **Attention Pooling** applied to the encoder's output sequence.
 
-This combination of a rich, domain-diverse dataset and an adaptive training mechanism allows viPolyQwen to develop a truly unified and highly capable embedding space applicable across a wide range of real-world scenarios.
+This combination allows viPolyQwen to learn a highly capable unified embedding space applicable across diverse real-world scenarios.
 
 ## Training details
 
-The training of the `viPolyQwen` model involved a significant computational effort, underscoring the complexity of learning from such a large and diverse multimodal dataset.
+The training of the `viPolyQwen` model involved a significant computational effort.
 
-*   **Hardware:** The model was trained on a high-performance computing cluster equipped with **4x NVIDIA H100 GPUs on Vast.AI**, each with 94GB of VRAM connected via NVLink.
-*   **Duration:** The primary training phase spanned approximately **15 days** of continuous computation on this hardware setup.
-*   **Framework:** Distributed training was orchestrated using the **Hugging Face `accelerate` library**, leveraging its capabilities for efficient multi-GPU scaling with FSDP ZeRO-3.
-*   **Precision & Optimizations:** Training utilized **`bfloat16` mixed precision** to optimize memory usage and computational throughput. **Flash Attention 2** was enabled for further efficiency gains in the attention mechanism.
+*   **Hardware:** Trained on a cluster with **4x NVIDIA H100 GPUs (94GB VRAM, NVLink)** via Vast.AI.
+*   **Duration:** Approx. **15 days** of continuous computation.
+*   **Framework:** Distributed training via Hugging Face `accelerate` using FSDP (likely ZeRO-3).
+*   **Precision & Optimizations:** **`bfloat16`** mixed precision; **Flash Attention 2**.
 *   **Key Hyperparameters:**
-    *   **Extended Qwen2VL tokenizer with new special tokens (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) and resize its embedding layer. 
+    *   Tokenizer/Embeddings: Extended Qwen2VL tokenizer/embedding layer for new special tokens.
     *   **Base Model:** `Qwen/Qwen2-VL-2B-Instruct`
-    *   **Optimizer:** AdamW (standard with Hugging Face Trainer)
-    *   **Learning Rate:** 1e-4 (with cosine decay after 5% warmup)
+    *   **Optimizer:** AdamW
+    *   **Learning Rate:** 1e-4 (cosine decay after 5% warmup)
     *   **Epochs:** 2
     *   **Batch Size (per device):** 24
-    *   **Gradient Accumulation Steps:** 8
-    *   **Effective Global Batch Size:** 768 (24 * 4 GPUs * 8 accumulation)
-    *   **Max Sequence Length:** 8192 tokens
+    *   **Gradient Accumulation:** 8 (Effective Global Batch Size: 768)
+    *   **Max Sequence Length:** 8192
     *   **Weight Decay:** 0.001
-    *   **Max Gradient Norm:** 1.0
-    *   **Pooling Strategy:** Mean Pooling
+    *   **Max Grad Norm:** 1.0
+    *   **Pooling Strategy:** **Attention Pooling** *(During training, loss calculated on attention-pooled embeddings)*
     *   **Loss Hyperparameters:** Temperature = 0.07, Contrastive Margin = 0.2
-*   **Dataset:** Trained on the described 11M+ sample dataset (`TRAIN_11M.jsonl`) and evaluated using a 5k sample split (`EVAL_5k.jsonl`).
-
-This setup highlights the substantial resources required to train state-of-the-art multimodal embedding models capable of handling diverse, real-world data effectively.
+*   **Dataset:** 11M+ training samples, 5k evaluation samples.
 
 ---
 
 ## Key Features & Advantages
 
-*   ✅ **Unified Multimodal Embedding:** A single, coherent vector space simplifies integration and downstream tasks.
-*   ✅ **Prefix-Guided Training:** Enables nuanced, task-aware learning within the unified space.
-*   ✅ **Exceptional Data Diversity:** Training on text similarity, instructions, complex OCR (handwriting, forms, diagrams, medical), and deep VQA (reasoning, charts, specialized radiology) ensures robustness and broad applicability.
-*   ✅ **Simplified Multimodal RAG/Search:** Allows querying a single index with text, image, or mixed queries to retrieve relevant multimodal information.
-*   ✅ **Enhanced Cross-Modal Understanding:** Joint training fosters embeddings sensitive to fine-grained visual-textual correlations.
-*   ✅ **High-Dimensional Nuance:** 1024-d captures detailed information crucial for complex tasks.
-*   ✅ **Multi-Image Aware:** Natively processes inputs containing multiple images.
-*   ✅ **Strong Vietnamese & Zero-Shot Capabilities:** Optimized for Vietnamese with proven cross-lingual generalization potential due to multilingual data inclusion.
-*   ✅ **Foundation for Advanced AI:** An ideal building block for sophisticated multimodal RAG, Graph RAG, semantic search, classification, and analysis systems.
+*   ✅ **Unified Multimodal Embedding:** Single vector space simplifies integration.
+*   ✅ **Prefix-Guided Training:** Enables task-aware learning during training.
+*   ✅ **Attention Pooling:** Creates richer, more nuanced 1D embeddings by focusing on salient visual/textual features, **enhancing capture of semantic details (including text-in-image concepts)** compared to mean pooling.
+*   ✅ **Exceptional Data Diversity:** Robustness from training on similarity, instructions, complex OCR, and deep VQA (incl. medical).
+*   ✅ **Simplified Multimodal RAG/Search:** Efficient retrieval from a single index.
+*   ✅ **Enhanced Cross-Modal Understanding:** Joint training fosters deep correlations.
+*   ✅ **High-Dimensional Nuance:** 1024-d captures fine-grained details.
+*   ✅ **Multi-Image Aware:** Natively processes multiple input images.
+*   ✅ **Strong Vietnamese & Zero-Shot Capabilities:** Optimized for Vietnamese with cross-lingual potential.
+*   ✅ **Foundation for Advanced AI:** Ideal for next-gen multimodal systems.
 
 ---
 
-## How to Use (Conceptual Example): [Usage Guide](USAGE.md)
+## How to Use: [Usage Guide & Examples](USAGE.md)
+
+*(The usage guide will explain strategy for using/omitting prefixes during inference as discussed previously: embed general data without prefix, use prefix only for specific OCR/VQA queries if desired).*
 
 ---
 
@@ -171,4 +164,3 @@ Please cite this repository URL until a formal publication is available.
       archivePrefix={arXiv},
       primaryClass={cs.CV}
 }
-```

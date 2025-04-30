@@ -1,123 +1,118 @@
 <p align="left">
-  <img src="https://huggingface.co/erax-ai/EraX-Translator-V1.0/resolve/main/erax-gmobile.png?download=true" alt="Logo">
+  <img src="https://huggingface.co/erax-ai/EraX-Translator-V1.0/resolve/main/erax-gmobile.png?download=true" alt="Logo" width="400">
 </p>
 
-# viPolyQwen: Embedding Đa phương thức Thống nhất: Tối ưu Loss Linh hoạt theo Tín hiệu Tiền tố
+# viPolyQwen: Embedding Đa phương thức qua Tối ưu Loss Linh hoạt theo Tín hiệu Tiền tố với Attention Pooling
+
+[**English** (README_en.md)] | Tiếng Việt
 
 **(Mô hình sắp được phát hành - Vui lòng theo dõi!)**
 
-[[English](README_en.md)] | **Tiếng Việt**
-
 ## Tóm tắt
 
-Các hệ thống đa phương thức hiện đại thường đối mặt với thách thức do sự phức tạp của việc quản lý các không gian embedding riêng biệt cho nhiều loại dữ liệu khác nhau (như văn bản, hình ảnh). Điều này có thể dẫn đến sự phân mảnh trong biểu diễn, quy trình truy xuất cồng kềnh và hạn chế trong khả năng suy luận chéo phương thức. 
+Các hệ thống đa phương thức hiện đại thường đối mặt với thách thức do sự phức tạp của việc quản lý các không gian embedding riêng biệt cho nhiều loại dữ liệu khác nhau (ví dụ: văn bản, hình ảnh). Điều này có thể dẫn đến sự phân mảnh trong biểu diễn, quy trình truy xuất cồng kềnh và hạn chế trong khả năng suy luận chéo phương thức.
 
-Chúng tôi giới thiệu **viPolyQwen**, một mô hình embedding đa phương thức tiên tiến, được thiết kế để tạo ra các **biểu diễn thống nhất, không gian đa chiều** cho hình ảnh, văn bản và các kết hợp tùy ý của chúng trong một không gian vector duy nhất, gắn kết. Chúng tôi đặt cho giải thuật này tên tiếng Anh là **Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization** (tên viPolyQwen là từ đây).
+Chúng tôi giới thiệu **viPolyQwen**, một mô hình embedding đa phương thức tiên tiến, được thiết kế để tạo ra các **biểu diễn thống nhất, chiều cao** cho hình ảnh, văn bản và các kết hợp tùy ý của chúng trong một không gian vector duy nhất, gắn kết. Tên gọi của mô hình phản ánh phương pháp cốt lõi: **Embedding Đa phương thức Thống nhất qua Tối ưu Loss Linh hoạt theo Tín hiệu Tiền tố (Prefix-Guided Dynamic Loss Optimization)**, xây dựng trên kiến trúc **Qwen 2 Visual Language**.
 
 Nghiên cứu này, bao gồm việc phát triển và huấn luyện mô hình viPolyQwen, được thực hiện với sự hợp tác chặt chẽ của **đội ngũ công nghệ AI tại Công ty Cổ phần Viễn thông Di động Toàn Cầu Gtel Mobile JSC (GMobile)**. Chuyên môn kỹ thuật và sự hỗ trợ hợp tác của họ đóng vai trò vô cùng quan trọng trong suốt quá trình nghiên cứu và đào tạo mô hình.
 
-Được xây dựng trên kiến trúc vision-language mạnh mẽ **Qwen2-VL 2B**, viPolyQwen sử dụng một framework học tương phản (contrastive learning) tinh vi. Mặc dù lấy cảm hứng từ các phương pháp như ColPali, viPolyQwen mang đến những cải tiến đáng kể, đặc biệt qua phương pháp huấn luyện độc đáo. Mô hình được huấn luyện trên một **tập dữ liệu quy mô lớn, cực kỳ đa dạng, vượt quá 11 triệu mẫu**. Tập dữ liệu được tuyển chọn tỉ mỉ này tích hợp một cách chiến lược các cặp tương đồng ngữ nghĩa văn bản-văn bản phức tạp (với điểm số tương đồng là liên tục 0.1...0.85), dữ liệu hướng dẫn phức tạp, và có lẽ đặc biệt nhất, một bộ sưu tập lớn các tình huống Nhận dạng Ký tự Quang học (OCR) và Trả lời Câu hỏi Trực quan (VQA) đa hình ảnh.
+Được xây dựng trên kiến trúc vision-language mạnh mẽ **Qwen2-VL 2B-Instruct**, viPolyQwen sử dụng một framework học tương phản (contrastive learning) tinh vi, được huấn luyện trên một **tập dữ liệu quy mô lớn, cực kỳ đa dạng, vượt quá 11 triệu mẫu**. Tập dữ liệu được tuyển chọn tỉ mỉ này tích hợp một cách chiến lược các cặp tương đồng ngữ nghĩa văn bản-văn bản phức tạp (với điểm số liên tục), dữ liệu thực hiện hướng dẫn phức tạp, và có lẽ đặc biệt nhất, một bộ sưu tập lớn các tình huống Nhận dạng Ký tự Quang học (OCR) và Trả lời Câu hỏi Trực quan (VQA) đa hình ảnh (bao gồm tài liệu, biểu đồ, chữ viết tay và hình ảnh y tế chuyên ngành).
 
-Đổi mới thuật toán cốt lõi nằm ở **chiến lược tối ưu hóa tổn thất hỗn hợp động được dẫn hướng bằng tiền tố** của viPolyQwen. Các tiền tố nhiệm vụ cụ thể (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) được thêm vào đầu vào, đóng vai trò như tín hiệu để báo hiệu loại dữ liệu. Cơ chế này **kích hoạt động một hàm loss tương ứng, được thiết kế riêng** (bao gồm InfoNCE, Triplet Loss, MSE, và tối đa hóa độ tương đồng cosine) đặc thù cho từng loại mẫu.
+Đổi mới thuật toán cốt lõi nằm ở **chiến lược tối ưu hóa tổn thất hỗn hợp động được dẫn hướng bằng tiền tố** của viPolyQwen. Các tiền tố nhiệm vụ cụ thể (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) dẫn hướng mô hình bằng cách báo hiệu loại dữ liệu, **kích hoạt động một hàm loss tương ứng, được thiết kế riêng** (bao gồm InfoNCE, Triplet Loss, MSE, và Tối đa hóa Tương đồng Cosine) cho từng loại mẫu.
 
-Các embedding cuối cùng được trích xuất bằng phương pháp **pooling trung bình (mean pooling)** trên các token đầu ra của bộ mã hóa, đảm bảo thu giữ toàn diện thông tin ngữ nghĩa và thị giác. Kết quả là các embedding 1024 chiều, được tạo ra từ hỗn hợp dữ liệu phong phú và chiến lược huấn luyện độc đáo này, thể hiện sự hiểu biết ngữ nghĩa và hình ảnh sâu sắc, tinh tế. Điều này giúp đơn giản hóa và nâng cao đáng kể các ứng dụng đầu cuối như Sinh Tăng cường Truy xuất (RAG) đa phương thức, Graph RAG, tìm kiếm chéo phương thức và phân tích tài liệu phức tạp. Mặc dù mô hình thể hiện hiệu suất đặc biệt mạnh mẽ bằng **tiếng Việt** do trọng tâm dữ liệu, dữ liệu huấn luyện đa ngôn ngữ (bao gồm lượng đáng kể tiếng Anh và tiếng Trung) tạo điều kiện cho khả năng **chuyển giao zero-shot** hiệu quả sang các ngôn ngữ khác.
+Quan trọng hơn, thay vì sử dụng các phương pháp pooling thông thường như mean pooling hay last-token pooling, vector embedding 1D cuối cùng được trích xuất bằng **Attention Pooling**. Cơ chế này cho phép mô hình **tập trung động vào các đặc trưng thị giác và văn bản nổi bật nhất** trong chuỗi token đầu ra của bộ mã hóa trước khi chiếu (projection). Bằng cách học cách gán trọng số cao hơn cho các đặc trưng quan trọng (như vùng văn bản trong ảnh hoặc các khái niệm ngữ nghĩa chính), attention pooling hướng tới việc tạo ra các embedding 1D **giàu thông tin và tinh tế hơn** so với việc lấy trung bình đơn giản, giúp tăng cường đáng kể khả năng nắm bắt nội dung ngữ nghĩa, ngay cả từ các hình ảnh chứa văn bản.
+
+Kết quả là các embedding 1024 chiều tạo điều kiện cho các ứng dụng đầu cuối mạnh mẽ như Sinh Tăng cường Truy xuất (RAG) đa phương thức, Graph RAG, tìm kiếm chéo phương thức và phân tích tài liệu phức tạp. Mặc dù được tối ưu hóa cho **tiếng Việt**, dữ liệu huấn luyện đa ngôn ngữ cho phép mô hình có khả năng **chuyển giao zero-shot** hiệu quả.
 
 ---
 
 ## Chi tiết Mô hình
 
 *   **Kiến trúc Nền tảng:** `Qwen/Qwen2-VL-2B-Instruct` - Mô hình Ngôn ngữ-Thị giác (VLM) làm nền tảng.
-*   **Chiến lược Embedding:** Không gian Embedding Thống nhất qua Học Tương phản Động được Dẫn hướng bằng Tiền tố.
+*   **Chiến lược Embedding:** Không gian Embedding Thống nhất qua Học Tương phản Động được Dẫn hướng bằng Tiền tố với **Attention Pooling**.
 *   **Chiều Embedding:** `1024`.
-*   **Chiến lược Pooling:** **Pooling Trung bình (Mean Pooling)**. Vector embedding cuối cùng được lấy bằng cách tính trung bình các trạng thái ẩn của tất cả các token đầu ra từ lớp cuối cùng của bộ mã hóa Qwen2-VL, sau đó chuẩn hóa L2. Điều này tổng hợp thông tin trên toàn bộ chuỗi đầu vào (token văn bản và token patch hình ảnh).
-*   **Biểu diễn Đầu vào:** Dữ liệu đầu vào (chuỗi văn bản, ảnh PIL) được xử lý bởi bộ xử lý của Qwen-VL. Hình ảnh được biểu diễn bằng token `<image>`. Điểm quan trọng: một **tiền tố nhiệm vụ cụ thể** được thêm vào *trước* nội dung văn bản chính để báo hiệu loại dữ liệu:
-    *   `<text_pair>`: Cho cặp văn bản với điểm tương đồng liên tục.
-    *   `<instr>`: Cho dữ liệu hướng dẫn (cặp instruction-response).
-    *   `<ocr>`: Cho dữ liệu OCR/OCQ (ảnh + câu hỏi -> câu trả lời).
-    *   `<vqa_multi>`: Cho VQA đa lượt (ảnh + câu hỏi -> câu trả lời).
-    *   `<vqa_single>`: Cho VQA đơn lượt (ảnh + câu hỏi -> câu trả lời).
-*   **Đầu ra:** Một vector dày `1024-d` duy nhất biểu diễn nội dung ngữ nghĩa và/hoặc thị giác của đầu vào.
+*   **Chiến lược Pooling:** **Attention Pooling.** Đây là một điểm khác biệt chính. Thay vì lấy trung bình đơn giản (mean pooling) hoặc chọn token cuối cùng, viPolyQwen sử dụng một *cơ chế chú ý học được (learned attention mechanism)* trên chuỗi trạng thái ẩn cuối cùng (đại diện cho cả token văn bản và patch hình ảnh).
+    *   Nó tính toán điểm chú ý (attention scores) dựa trên mức độ liên quan của mỗi trạng thái ẩn đối với ngữ cảnh tổng thể.
+    *   Nó gán trọng số cao hơn cho các trạng thái chứa nhiều thông tin hơn (ví dụ: các vùng văn bản cụ thể trong ảnh, các đối tượng thị giác chính, các token ngữ nghĩa quan trọng).
+    *   Nó tính toán một *trung bình có trọng số (weighted average)* dựa trên các trọng số chú ý này.
+    *   **Lợi ích:** Điều này cho phép mô hình tạo ra một biểu diễn 1D phù hợp hơn với ngữ cảnh và tinh tế hơn bằng cách tập trung vào các đặc trưng nổi bật, cải thiện đáng kể việc nắm bắt bản chất ngữ nghĩa và thị giác cốt lõi so với việc lấy trung bình đồng nhất. Điều này đặc biệt có lợi cho việc biểu diễn các hình ảnh chứa văn bản hoặc các cấu trúc trực quan phức tạp như biểu đồ và bảng biểu trong một vector duy nhất.
+*   **Biểu diễn Đầu vào:** Dữ liệu đầu vào (chuỗi văn bản, ảnh PIL) được xử lý bởi bộ xử lý của Qwen-VL. Hình ảnh được biểu diễn bằng token `<image>`. Điểm quan trọng: một **tiền tố nhiệm vụ cụ thể** được thêm vào *trước* nội dung văn bản chính trong quá trình *huấn luyện* để báo hiệu loại dữ liệu và dẫn hướng việc tính toán loss:
+    *   `<text_pair>`: Cho cặp tương đồng văn bản.
+    *   `<instr>`: Cho dữ liệu thực hiện hướng dẫn.
+    *   `<ocr>`: Cho dữ liệu OCR/OCQ.
+    *   `<vqa_multi>`: Cho VQA đa lượt.
+    *   `<vqa_single>`: Cho VQA đơn lượt.
+    *(Lưu ý: Đối với inference/embedding thông thường, tiền tố thường được bỏ qua trừ khi truy vấn một nhiệm vụ cụ thể như OCR/VQA - xem Hướng dẫn Sử dụng)*.
+*   **Đầu ra:** Một vector dày `1024-d` duy nhất, đã được chuẩn hóa L2, đại diện cho đầu vào.
 
 ---
 
-## Huấn luyện
+## Παράδειγμα Huấn luyện
 
 Sự mạnh mẽ và linh hoạt của viPolyQwen bắt nguồn từ sự kết hợp cộng hưởng giữa chiến lược tối ưu hóa độc đáo và dữ liệu huấn luyện cực kỳ đa dạng:
 
-1.  **Tập Dữ liệu Phong phú và Không đồng nhất (Hơn 11 Triệu Mẫu):** Kho dữ liệu huấn luyện tích hợp nhiều loại dữ liệu và nhiệm vụ, được liên kết thông qua các tiền tố đầu vào:
-    *   **Tương đồng Ngữ nghĩa Văn bản-Văn bản (`<text_pair>`, ~5.6M):** Các cặp $(t_a, t_b)$ với điểm tương đồng $s \in [0, 1]$, thúc đẩy hiểu biết văn bản tinh tế.
-    *   **Thực hiện Hướng dẫn (`<instr>`, ~0.6M):** Các cặp (hướng dẫn đơn và đa lượt $i$, phản hồi $r$), tăng cường khả năng suy luận theo ngữ cảnh và biểu diễn việc thực thi nhiệm vụ.
-    *   **OCR/OCQ Đa hình ảnh Đa dạng (`<ocr>`, ~2.5M):** Hạng mục này vượt xa việc nhận dạng văn bản tài liệu đơn giản. Nó bao gồm một phổ rộng các tác vụ nhận dạng văn bản trực quan trên 1-5 ảnh mỗi mẫu, chẳng hạn như:
-        *   Chú thích cảnh đường phố và nhận dạng văn bản.
-        *   Hiểu tài liệu toán học (công thức, sơ đồ).
-        *   Sự tương tác giữa văn bản và hình ảnh trong tài liệu nói chung.
-        *   Phân tích biểu đồ và sơ đồ.
-        *   Nhận dạng chữ viết tay (ví dụ: hóa đơn, mẫu yêu cầu bảo hiểm, báo cáo tai nạn).
-        *   Nhận dạng các giấy tờ thông dụng của Việt Nam (ví dụ: Căn cước công dân - CCCD, giấy phép lái xe).
-    *   **VQA Đa hình ảnh Phức tạp (`<vqa_single>`, `<vqa_multi>`, ~2.5M):** Các tác vụ này (VQA đơn và đa lượt), cũng sử dụng 1-5 ảnh, đòi hỏi khả năng suy luận trực quan sâu sắc hơn được tích hợp với các truy vấn văn bản. Dữ liệu bao gồm:
-        *   Trả lời câu hỏi trực quan tổng quát trên nhiều cảnh khác nhau.
-        *   Diễn giải bảng và biểu đồ phức tạp đòi hỏi suy luận.
-        *   **Phân tích Hình ảnh Y tế Chuyên sâu (~0.5M mẫu):** Một tập hợp con đáng kể dành riêng cho OCR và VQA trong lĩnh vực X quang. Điều này bao gồm việc phân tích các bản quét y tế đa dạng (hình ảnh da liễu, X-quang, CT, MRI) để trả lời các câu hỏi chẩn đoán liên quan đến các lĩnh vực sức khỏe quan trọng bao gồm da, xương, tim, phổi, não và răng.
-    *   **Phân bổ Ngôn ngữ:** Mặc dù tập dữ liệu chủ yếu bao gồm nội dung **tiếng Việt** để đảm bảo hiệu suất mạnh mẽ trong bối cảnh này, nó tích hợp một cách chiến lược lượng đáng kể các mẫu **tiếng Anh** và **tiếng Trung** trong tất cả các danh mục. Nền tảng đa ngôn ngữ này rất quan trọng để cho phép mô hình **khái quát hóa zero-shot** hiệu quả sang các ngôn ngữ khác chưa được thấy.
+1.  **Tập Dữ liệu Phong phú và Không đồng nhất (>11M Mẫu):** (Mô tả chi tiết các thành phần dữ liệu - tương đồng văn bản, hướng dẫn, OCR, VQA, y tế - giữ nguyên như bản trước).
+    *   **Phân bổ Ngôn ngữ:** Chủ yếu là **tiếng Việt**, với lượng đáng kể mẫu **tiếng Anh** và **tiếng Trung**, thúc đẩy khả năng khái quát hóa zero-shot mạnh mẽ.
 
 2.  **Tối ưu hóa Tổn thất Hỗn hợp Động được Dẫn hướng bằng Tiền tố:**
-    *   Như đã mô tả trước đây, tiền tố của mỗi mẫu sẽ động chọn một hàm loss phù hợp từ một bộ được định nghĩa trước.
+    *   Trong quá trình huấn luyện, tiền tố của mỗi mẫu báo hiệu hàm loss phù hợp.
     *   **Bộ Hàm Loss được Áp dụng:**
         *   `<text_pair>`: InfoNCE Đối xứng + Hồi quy Tương đồng MSE.
         *   `<instr>`: InfoNCE Đối xứng + Tối đa hóa Tương đồng Cosine Trực tiếp.
-        *   `<ocr>`, `<vqa_single>`, `<vqa_multi>`: InfoNCE Đối xứng + Tổn thất Lề Triplet (Triplet Margin Loss) (lề có thể được điều chỉnh cho đa lượt).
+        *   `<ocr>`, `<vqa_single>`, `<vqa_multi>`: InfoNCE Đối xứng + Tổn thất Lề Triplet.
+    *   Vector embedding 1D cuối cùng được sử dụng để tính toán các hàm loss này được tạo ra thông qua **Attention Pooling** áp dụng trên chuỗi đầu ra của bộ mã hóa.
 
-Sự kết hợp giữa tập dữ liệu phong phú, đa dạng về lĩnh vực và cơ chế huấn luyện thích ứng này cho phép viPolyQwen phát triển một không gian embedding thực sự thống nhất và có năng lực cao, áp dụng được trong nhiều tình huống thực tế.
+Sự kết hợp này cho phép viPolyQwen học được một không gian embedding thống nhất có năng lực cao, áp dụng được trong nhiều tình huống thực tế đa dạng.
 
 ## Chi tiết Huấn luyện
 
-Việc huấn luyện mô hình `viPolyQwen` đòi hỏi yêu cầu tài nguyên tính toán lớn, nhấn mạnh sự phức tạp của việc học từ một tập dữ liệu đa phương thức lớn và đa dạng như vậy.
+Việc huấn luyện mô hình `viPolyQwen` đòi hỏi yêu cầu tài nguyên tính toán lớn.
 
-*   **Phần cứng:** Mô hình được huấn luyện trên một cụm máy tính hiệu năng cao bao gồm **4x GPU NVIDIA H100 trên Vast.AI**, mỗi GPU có 94GB VRAM được kết nối qua NVLink.
-*   **Thời gian:** Giai đoạn huấn luyện chính kéo dài khoảng **15 ngày** tính toán liên tục trên cấu hình phần cứng này.
-*   **Framework:** Quá trình huấn luyện phân tán được điều phối sử dụng thư viện **`accelerate` của Hugging Face**, khai thác khả năng mở rộng đa GPU hiệu quả của nó với FSDP ZwRO-3.
-*   **Độ chính xác & Tối ưu hóa:** Quá trình huấn luyện sử dụng độ chính xác hỗn hợp **`bfloat16`** để tối ưu hóa việc sử dụng bộ nhớ và thông lượng tính toán. **Flash Attention 2** đã được kích hoạt nhằm tăng cường hiệu quả cho cơ chế attention.
+*   **Phần cứng:** Huấn luyện trên cụm máy tính với **4x GPU NVIDIA H100 (94GB VRAM, NVLink)** qua Vast.AI.
+*   **Thời gian:** Khoảng **15 ngày** tính toán liên tục.
+*   **Framework:** Huấn luyện phân tán qua Hugging Face `accelerate` sử dụng FSDP (có thể là ZeRO-3).
+*   **Độ chính xác & Tối ưu hóa:** Độ chính xác hỗn hợp **`bfloat16`**; **Flash Attention 2**.
 *   **Các siêu tham số chính (Key Hyperparameters):**
-    *   **Chèn vào Qwen2VL tokenizer với (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) và **mở rộng lớp embedding** tương ứng 
-    *   **Mô hình cơ sở (Base Model):** `Qwen/Qwen2-VL-2B-Instruct`
-    *   **Bộ tối ưu hóa (Optimizer):** AdamW (tiêu chuẩn của Hugging Face Trainer)
-    *   **Tốc độ học (Learning Rate):** 1e-4 (với giảm theo hàm cosine sau 5% warmup)
+    *   Tokenizer/Embeddings: Mở rộng tokenizer/lớp embedding của Qwen2VL cho các token đặc biệt mới.
+    *   **Mô hình cơ sở:** `Qwen/Qwen2-VL-2B-Instruct`
+    *   **Bộ tối ưu hóa:** AdamW
+    *   **Tốc độ học:** 1e-4 (giảm cosine sau 5% warmup)
     *   **Số Epochs:** 2
-    *   **Kích thước lô trên mỗi thiết bị (Batch Size per device):** 24
-    *   **Số bước Tích lũy Gradient (Gradient Accumulation Steps):** 8
-    *   **Kích thước lô hiệu dụng toàn cục (Effective Global Batch Size):** 768 (24 * 4 GPUs * 8 accumulation)
-    *   **Độ dài chuỗi tối đa (Max Sequence Length):** 8192 tokens
-    *   **Suy giảm trọng số (Weight Decay):** 0.001
-    *   **Chuẩn Gradient Tối đa (Max Gradient Norm):** 1.0
-    *   **Chiến lược Pooling (Pooling Strategy):** Mean Pooling
-    *   **Siêu tham số Hàm Loss:** Temperature = 0.07, Contrastive Margin = 0.2
-*   **Dataset:** Huấn luyện trên tập dữ liệu hơn 11 triệu mẫu đã mô tả (`TRAIN_11M.jsonl`) và đánh giá bằng tập con 5 nghìn mẫu (`EVAL_5k.jsonl`).
-
-Cấu hình này cho thấy yêu cầu tài nguyên đáng kể cần thiết để huấn luyện các mô hình embedding đa phương thức tiên tiến, có khả năng xử lý hiệu quả dữ liệu đa dạng trong thực tế.
+    *   **Kích thước lô (mỗi device):** 24
+    *   **Tích lũy Gradient:** 8 (Kích thước lô hiệu dụng toàn cục: 768)
+    *   **Độ dài chuỗi tối đa:** 8192
+    *   **Suy giảm trọng số:** 0.001
+    *   **Chuẩn Gradient Tối đa:** 1.0
+    *   **Chiến lược Pooling:** **Attention Pooling** *(Trong huấn luyện, loss được tính trên embedding đã qua attention pooling)*
+    *   **Siêu tham số Loss:** Temperature = 0.07, Contrastive Margin = 0.2
+*   **Dataset:** Hơn 11 triệu mẫu huấn luyện, 5 nghìn mẫu đánh giá.
 
 ---
 
 ## Tính năng & Ưu điểm Chính
 
-*   ✅ **Embedding Đa phương thức Thống nhất:** Không gian vector đơn nhất, gắn kết giúp đơn giản hóa việc tích hợp và các tác vụ đầu cuối.
-*   ✅ **Huấn luyện Dẫn hướng bằng Tiền tố:** Cho phép học các sắc thái, nhận biết nhiệm vụ trong không gian thống nhất.
-*   ✅ **Dữ liệu Cực kỳ Đa dạng:** Huấn luyện trên tương đồng văn bản, hướng dẫn, OCR phức tạp (chữ viết tay, biểu mẫu, sơ đồ, y tế) và VQA sâu (suy luận, biểu đồ, X quang chuyên ngành) đảm bảo tính mạnh mẽ và khả năng ứng dụng rộng rãi.
-*   ✅ **RAG/Tìm kiếm Đa phương thức Đơn giản hóa:** Cho phép truy vấn một chỉ mục duy nhất với các truy vấn văn bản, hình ảnh hoặc hỗn hợp để truy xuất thông tin đa phương thức liên quan.
-*   ✅ **Tăng cường Hiểu biết Chéo phương thức:** Huấn luyện chung thúc đẩy các embedding nhạy cảm với các mối tương quan hình ảnh-văn bản tinh tế.
-*   ✅ **Nắm bắt Chi tiết ở Chiều cao:** Embedding 1024-d thu giữ thông tin chi tiết quan trọng cho các tác vụ phức tạp.
+*   ✅ **Embedding Đa phương thức Thống nhất:** Không gian vector đơn nhất giúp đơn giản hóa tích hợp.
+*   ✅ **Huấn luyện Dẫn hướng bằng Tiền tố:** Cho phép học các sắc thái, nhận biết nhiệm vụ trong quá trình huấn luyện.
+*   ✅ **Attention Pooling:** Tạo ra embedding 1D **giàu thông tin và tinh tế hơn** bằng cách tập trung vào các đặc trưng thị giác/văn bản nổi bật, **nâng cao khả năng nắm bắt chi tiết ngữ nghĩa (bao gồm khái niệm text-trong-ảnh)** so với mean pooling.
+*   ✅ **Dữ liệu Cực kỳ Đa dạng:** Mạnh mẽ nhờ huấn luyện trên tương đồng văn bản, hướng dẫn, OCR phức tạp, và VQA sâu (bao gồm y tế).
+*   ✅ **RAG/Tìm kiếm Đa phương thức Đơn giản hóa:** Truy xuất hiệu quả từ một chỉ mục duy nhất.
+*   ✅ **Tăng cường Hiểu biết Chéo phương thức:** Huấn luyện chung thúc đẩy các mối tương quan sâu sắc.
+*   ✅ **Nắm bắt Chi tiết ở Chiều cao:** Embedding 1024-d thu giữ thông tin tinh vi.
 *   ✅ **Nhận biết Đa hình ảnh:** Xử lý tự nhiên các đầu vào chứa nhiều hình ảnh.
-*   ✅ **Mạnh mẽ Tiếng Việt & Zero-Shot Tốt:** Tối ưu hóa cho tiếng Việt với khả năng khái quát hóa chéo ngôn ngữ đã được chứng minh nhờ bao gồm dữ liệu đa ngôn ngữ.
-*   ✅ **Nền tảng cho AI Tiên tiến:** Một khối xây dựng lý tưởng cho các hệ thống RAG đa phương thức, Graph RAG, tìm kiếm ngữ nghĩa, phân loại và phân tích phức tạp.
+*   ✅ **Mạnh mẽ Tiếng Việt & Zero-Shot Tốt:** Tối ưu hóa cho tiếng Việt với tiềm năng chéo ngôn ngữ.
+*   ✅ **Nền tảng cho AI Tiên tiến:** Khối xây dựng lý tưởng cho các hệ thống đa phương thức thế hệ mới.
 
 ---
 
-## Cách Sử dụng (Ví dụ Khái niệm): [Usage Guide](USAGE.md)
+## Hướng dẫn Sử dụng: [Hướng dẫn Sử dụng & Ví dụ](USAGE_vi.md)
+
+*(Hướng dẫn sử dụng sẽ giải thích chiến lược sử dụng/bỏ qua tiền tố trong quá trình inference như đã thảo luận: embed dữ liệu chung không cần tiền tố, chỉ dùng tiền tố cho các truy vấn OCR/VQA cụ thể nếu muốn).*
 
 ---
 
 ## Ứng dụng Tiềm năng
 
-*   **RAG Đa phương thức:** Truy xuất các đoạn văn bản, hình ảnh, bảng biểu hoặc các phần tài liệu có liên quan cao (bao gồm báo cáo y tế hoặc báo cáo tài chính) bằng các truy vấn thống nhất.
+*   **RAG Đa phương thức:** Truy xuất các đoạn văn bản, hình ảnh, bảng biểu, hoặc các phần tài liệu có liên quan cao (bao gồm báo cáo y tế hoặc báo cáo tài chính) bằng các truy vấn thống nhất.
 *   **Graph RAG:** Xây dựng đồ thị tri thức nơi các nút đại diện cho các thực thể đa dạng (bệnh nhân, tài liệu, quy trình, phát hiện hình ảnh) được liên kết qua các embedding thống nhất.
 *   **Truy xuất Chéo phương thức:** Tìm kiếm hiệu quả hình ảnh y tế dựa trên mô tả văn bản, tìm tài liệu liên quan từ hình ảnh biểu mẫu, v.v.
 *   **Trí tuệ Tài liệu (Document Intelligence):** Phân tích sâu các tài liệu phức tạp như yêu cầu bảo hiểm, bài báo khoa học hoặc hướng dẫn kỹ thuật, tận dụng cả bố cục trực quan và nội dung.
@@ -144,16 +139,16 @@ Cấu hình này cho thấy yêu cầu tài nguyên đáng kể cần thiết đ
 Vui lòng trích dẫn URL của kho lưu trữ này cho đến khi có ấn phẩm chính thức.
 
 ```bibtex
-@misc{viPolyQwen_github_2025,
-  author       = {Steve Nguyen Anh Nguyen EraX GMobile},
-  title        = {viPolyQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization},
-  year         = {2025},
+@misc{viPolyQwen_github_2024,
+  author       = {Steve Nguyen Anh Nguyen and EraX AI and GMobile AI Team}, # Cập nhật tác giả
+  title        = {viPolyQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization with Attention Pooling}, # Cập nhật tiêu đề
+  year         = {2024},
   publisher    = {GitHub},
   journal      = {GitHub repository},
-  howpublished = {\url{https://github.com/EraX-AI/viPolyQwen}}
+  howpublished = {\url{https://github.com/EraX-AI/viPolyQwen}} # Thay bằng URL repo cuối cùng
 }
 
-@misc{faysse2024ColPali,
+@misc{faysse2024colpali,
       title={ColPali: Efficient Document Retrieval with Vision Language Models},
       author={Manuel Faysse and Hugues Sibille and Tony Wu and Bilel Omrani and Gautier Viaud and Céline Hudelot and Pierre Colombo},
       year={2024},

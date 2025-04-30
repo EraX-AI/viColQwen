@@ -361,7 +361,7 @@ except Exception as e:
     logging.error(f"Error during array comparison: {e}")
 ```
 
-# Tại sao train thì 100% có prefix mà khi embedding production/query lại khi có khi không là sao ? Cơ sở khoa học nào cho biét là nó sẽ works tốt ?
+# Tại sao train thì 100% có prefix mà khi embedding production/query lại khi có khi không là sao ? Cơ sở khoa học nào cho biết là nó sẽ works tốt ?
 
 Đây là một câu hỏi cực kỳ xác đáng và phản ánh đúng một điểm có thể gây bối rối nếu không được giải thích kỹ lưỡng. Việc huấn luyện 100% có prefix nhưng khi dùng lại "khi có khi không" **không phải là một sai sót**, mà là một **thiết kế có chủ đích** dựa trên cách mô hình học và mục đích sử dụng khác nhau của embedding.
 
