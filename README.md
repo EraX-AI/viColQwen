@@ -1,70 +1,64 @@
-# Introduce viOmniQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization
+# viOmniQwen: Unified Multimodal Embeddings via Prefix-Guided Dynamic Loss Optimization
+
+**(Model Release Pending - Stay Tuned!)**
 
 ## Abstract
 
-Các hệ thống đa phương thức hiện đại thường gặp trở ngại bởi sự phức tạp của việc quản lý không gian embedding riêng biệt cho từng loại dữ liệu (văn bản, hình ảnh), dẫn đến sự phân mảnh trong biểu diễn, quy trình truy xuất phức tạp và hạn chế trong khả năng suy luận chéo phương thức. Chúng tôi giới thiệu **viOmniQwen**, một mô hình embedding đa phương thức tiên tiến, được thiết kế để tạo ra các biểu diễn **thống nhất, chiều cao** cho hình ảnh, văn bản và các kết hợp tùy ý của chúng trong một không gian vector duy nhất. Dựa trên kiến trúc vision-language mạnh mẽ **Qwen2-VL 2B**, viOmniQwen áp dụng một phương pháp học tương phản (contrastive learning) tinh vi, lấy cảm hứng từ ColPali nhưng được cải tiến đáng kể. Mô hình được huấn luyện trên một tập dữ liệu **đa dạng quy mô lớn (hơn 11 triệu mẫu)**, tích hợp một cách chiến lược các cặp tương đồng ngữ nghĩa văn bản-văn bản phức tạp (với điểm số liên tục), dữ liệu hướng dẫn phức tạp, tác vụ OCR đa hình ảnh và VQA đa hình ảnh. Điểm độc đáo cốt lõi nằm ở **chiến lược tối ưu hóa tổn thất hỗn hợp động (dynamic mixed-loss optimization)**, được dẫn hướng bởi các **tiền tố nhiệm vụ cụ thể (task-specific prefixes)**. Các tiền tố này (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) được thêm vào đầu vào để báo hiệu loại dữ liệu và kích hoạt một **hàm loss tương ứng** (bao gồm InfoNCE, Triplet Loss, MSE, và tối đa hóa độ tương đồng cosine) được thiết kế riêng cho từng loại mẫu. Embedding cuối cùng được trích xuất bằng phương pháp **mean pooling**, thu giữ thông tin ngữ nghĩa và thị giác một cách toàn diện. Kết quả là các embedding 1024 chiều thể hiện sự hiểu biết ngữ nghĩa và hình ảnh sâu sắc, giúp đơn giản hóa và nâng cao đáng kể các ứng dụng như RAG đa phương thức, Graph RAG, tìm kiếm chéo phương thức và phân tích tài liệu phức tạp, đặc biệt trong bối cảnh ngôn ngữ Việt.
+Modern multimodal systems often struggle with the complexity of managing separate embedding spaces for different data types (e.g., text, images), leading to representational fragmentation, intricate retrieval pipelines, and suboptimal cross-modal reasoning. We introduce **viOmniQwen**, an advanced multimodal embedding model engineered to generate **high-dimensional, unified representations** for images, texts, and their arbitrary combinations within a single vector space. Built upon the powerful **Qwen2-VL 2B** vision-language architecture, viOmniQwen employs a sophisticated contrastive learning paradigm, inspired by ColPali but significantly enhanced. The model is trained on a **large-scale, heterogeneous dataset exceeding 11 million samples**, strategically integrating challenging text-text semantic similarity pairs (with continuous scores), complex instruction-following data, multi-image Optical Character Recognition (OCR) tasks, and multi-image Visual Question Answering (VQA) scenarios. The core innovation lies in its **prefix-guided dynamic mixed-loss optimization strategy**. Task-specific prefixes (`<text_pair>`, `<instr>`, `<ocr>`, `<vqa_multi>`, `<vqa_single>`) are prepended to the input, signaling the data type and **dynamically triggering a corresponding, tailored loss function** (including InfoNCE, Triplet Loss, MSE, and direct cosine similarity maximization) for each sample. Final embeddings are extracted using **mean pooling** over the encoder's output tokens, capturing comprehensive semantic and visual information. The resulting 1024-dimensional embeddings exhibit nuanced semantic and visual understanding, significantly simplifying and enhancing downstream applications such as multimodal Retrieval-Augmented Generation (RAG), Graph RAG, cross-modal search, and complex document analysis, particularly within the Vietnamese language context.
 
 ---
 
 ## Model Details
 
-*   **Base Architecture:** `Qwen/Qwen2-VL-2B` - Vision-Language Model (VLM) nền tảng.
-*   **Embedding Strategy:** Không gian Embedding Thống nhất qua Học Tương phản Động được Dẫn hướng bởi Tiền tố (Prefix-Guided Dynamic Contrastive Learning).
+*   **Base Architecture:** `Qwen/Qwen2-VL-2B` - The foundational Vision-Language Model (VLM).
+*   **Embedding Strategy:** Unified Embedding Space via Prefix-Guided Dynamic Contrastive Learning.
 *   **Embedding Dimension:** `1024`.
-*   **Pooling Strategy:** **Mean Pooling**. Embedding cuối cùng $`e \in \mathbb{R}^{1024}`$ được tính bằng cách lấy trung bình các trạng thái ẩn $`H = [h_1, h_2, ..., h_N] \in \mathbb{R}^{N \times d}`$ từ lớp cuối cùng, sau đó chuẩn hóa L2:
-    ```math
-    \bar{h} = \frac{1}{N} \sum_{i=1}^{N} h_i
-    ```
-    ```math
-    e = \frac{\bar{h}}{\|\bar{h}\|_2}
-    ```
-    (Here, $`h_i`$ represents the hidden state of the $`i`$-th token, $`N`$ is the sequence length, $`\bar{h}`$ is the mean pooled vector, and $`\|\cdot\|_2`$ denotes the L2 norm).
-*   **Input Representation:** Dữ liệu đầu vào (văn bản, hình ảnh PIL) được xử lý bởi bộ xử lý của Qwen-VL. Hình ảnh được biểu diễn bằng token `<image>`. Quan trọng hơn, *trước* phần nội dung văn bản chính, một **tiền tố nhiệm vụ cụ thể** được thêm vào để báo hiệu loại dữ liệu:
-    *   `<text_pair>`: Cho cặp văn bản với điểm tương đồng.
-    *   `<instr>`: Cho dữ liệu hướng dẫn (instruction-response).
-    *   `<ocr>`: Cho dữ liệu OCR/OCQ.
-    *   `<vqa_multi>`: Cho VQA đa lượt.
-    *   `<vqa_single>`: Cho VQA đơn lượt.
-*   **Output:** Một vector dày `1024-d` duy nhất $`e`$ biểu diễn nội dung ngữ nghĩa và/hoặc thị giác của đầu vào.
+*   **Pooling Strategy:** **Mean Pooling**. The final embedding vector is obtained by averaging the hidden states of all output tokens from the final layer of the Qwen2-VL encoder, followed by L2 normalization. This aggregates information across the entire input sequence (text tokens and image patch tokens).
+*   **Input Representation:** Input data (text strings, PIL Images) is processed by the Qwen-VL processor. Images are represented by the `<image>` token. Crucially, a **task-specific prefix** is prepended to the main textual input to signal the data type:
+    *   `<text_pair>`: For text similarity pairs with continuous scores.
+    *   `<instr>`: For instruction-following data (instruction-response pairs).
+    *   `<ocr>`: For OCR/OCQ data (image(s)+query -> answer).
+    *   `<vqa_multi>`: For multi-turn VQA (image(s)+question -> answer).
+    *   `<vqa_single>`: For single-turn VQA (image(s)+question -> answer).
+*   **Output:** A single `1024-d` dense vector representing the semantic and/or visual content of the input.
 
 ---
 
 ## Training Paradigm
 
-Sức mạnh của viOmniQwen đến từ sự kết hợp giữa tập dữ liệu đa dạng và chiến lược tối ưu hóa độc đáo:
+viOmniQwen's robustness stems from its diverse data mixture and unique optimization strategy:
 
-1.  **Heterogeneous Dataset (Hơn 11 Triệu Mẫu):** Tích hợp 4 loại dữ liệu chính, liên kết với các tiền tố:
-    *   **Text-Text Semantic Similarity (`<text_pair>`, ~5.6M):** Cặp $(t_a, t_b)$ với điểm số $`s \in [0, 1]`$.
-    *   **Instruction Following (`<instr>`, ~0.6M):** Cặp (instruction $`i`$, response $`r`$).
-    *   **Multi-Image OCR/OCQ (`<ocr>`, ~2.5M):** Bộ ba $(\{\text{image(s)}\}_q, \text{query } q, \text{answer } a)$.
-    *   **Multi-Image VQA (`<vqa_single>`, `<vqa_multi>`, ~2.5M):** Bộ ba $(\{\text{image(s)}\}_q, \text{question } q, \text{answer } a)$.
-    Tập trung vào tiếng Việt (vi), cùng với tiếng Anh (en) và Trung (zh).
+1.  **Heterogeneous Dataset (Over 11 Million Samples):** Integrates four primary data types linked to the prefixes above:
+    *   **Text-Text Semantic Similarity (`<text_pair>`, ~5.6M):** Pairs $(t_a, t_b)$ with similarity scores $s \in [0, 1]$.
+    *   **Instruction Following (`<instr>`, ~0.6M):** Pairs (instruction $i$, response $r$).
+    *   **Multi-Image OCR/OCQ (`<ocr>`, ~2.5M):** Triples $(\{\text{image(s)}\}_q, \text{query } q, \text{answer } a)$.
+    *   **Multi-Image VQA (`<vqa_single>`, `<vqa_multi>`, ~2.5M):** Triples $(\{\text{image(s)}\}_q, \text{question } q, \text{answer } a)$.
+    The dataset has a primary focus on Vietnamese (vi), with substantial English (en) and Chinese (zh) coverage.
 
 2.  **Prefix-Guided Dynamic Mixed-Loss Optimization:**
-    *   Mỗi mẫu trong batch được gắn tiền tố nhiệm vụ tương ứng.
-    *   Dựa trên tiền tố, một hàm loss cụ thể $\mathcal{L}_{\text{prefix}}$ được **kích hoạt và áp dụng** cho cặp embedding $(e_a, e_b)$ của mẫu đó.
-    *   Tổn thất tổng của batch $\mathcal{L}_{\text{batch}}$ là trung bình của các tổn thất riêng lẻ cho từng mẫu $`i`$ trong batch $`B`$:
-        ```math
-        \mathcal{L}_{\text{batch}} = \frac{1}{B} \sum_{i=1}^{B} \mathcal{L}_{\text{prefix}(i)}(e_{a,i}, e_{b,i}, \text{params}_i)
-        ```
-    *   **Các hàm loss được sử dụng:**
-        *   **Cho `<text_pair>`:** Kết hợp InfoNCE đối xứng và MSE Regression (so khớp điểm tương đồng dự đoán $`\hat{s}`$ với điểm thật $`s_{\text{true}}`$).
-        *   **Cho `<instr>`:** Kết hợp InfoNCE đối xứng và Direct Cosine Similarity Maximization (khuyến khích $`e_a \cdot e_b`$ tiến tới 1).
-        *   **Cho `<ocr>`, `<vqa_single>`, `<vqa_multi>`:** Kết hợp InfoNCE đối xứng và Triplet Margin Loss (đảm bảo khoảng cách $`m`$ giữa cặp dương và âm khó nhất, với margin có thể điều chỉnh cho multi-turn).
+    *   Each sample in a batch is identified by its corresponding task prefix.
+    *   Based on the detected prefix, a specific loss function ($\mathcal{L}_{\text{prefix}}$) from a pre-defined suite is **dynamically selected and applied** to the embedding pair $(e_a, e_b)$ computed for that sample.
+    *   The total batch loss ($\mathcal{L}_{\text{batch}}$) is the average of these individually computed losses across all samples in the batch.
+    *   **Loss Function Suite:**
+        *   **For `<text_pair>`:** Combines Symmetric InfoNCE loss with Mean Squared Error (MSE) Similarity Regression (aligning predicted similarity with ground-truth scores).
+        *   **For `<instr>`:** Combines Symmetric InfoNCE loss with Direct Cosine Similarity Maximization (encouraging high similarity between instruction and response embeddings).
+        *   **For `<ocr>`, `<vqa_single>`, `<vqa_multi>`:** Combines Symmetric InfoNCE loss with Triplet Margin Loss (enforcing a margin between positive pairs and the hardest negative pairs within the batch, with potentially adjusted margin for multi-turn VQA).
+
+This dynamic, prefix-guided approach allows the model to effectively learn from diverse data structures within a single unified embedding space.
 
 ---
 
 ## Key Features & Advantages
 
-*   ✅ **Unified Multimodal Embedding:** Không gian vector đơn nhất cho mọi loại đầu vào.
-*   ✅ **Prefix-Guided Training:** Cho phép mô hình chuyên biệt hóa xử lý từng loại dữ liệu.
-*   ✅ **Simplified Multimodal RAG/Search:** Truy vấn đơn giản trên một chỉ mục vector duy nhất.
-*   ✅ **Enhanced Cross-Modal Understanding:** Huấn luyện phối hợp thúc đẩy sự hiểu biết sâu sắc.
-*   ✅ **High-Dimensional Nuance:** Embedding 1024-d nắm bắt chi tiết tinh vi.
-*   ✅ **Multi-Image Aware:** Xử lý tự nhiên ngữ cảnh nhiều hình ảnh.
-*   ✅ **Robust Performance:** Dữ liệu và loss đa dạng tạo ra embedding linh hoạt.
-*   ✅ **Strong Vietnamese & Multilingual Focus:** Tối ưu cho tiếng Việt, hỗ trợ tốt tiếng Anh/Trung.
-*   ✅ **Foundation for Advanced AI:** Nền tảng lý tưởng cho AI đa phương thức.
+*   ✅ **Unified Multimodal Embedding:** Single vector space for text, image(s), and combinations.
+*   ✅ **Prefix-Guided Training:** Enables specialized handling of different data types (similarity, instructions, OCR, VQA) via prefixes and tailored losses.
+*   ✅ **Simplified Multimodal RAG/Search:** Streamlines querying a single vector index with diverse inputs.
+*   ✅ **Enhanced Cross-Modal Understanding:** Joint training on diverse tasks fosters deep visual-textual correlations.
+*   ✅ **High-Dimensional Nuance:** 1024-d embeddings capture fine-grained details.
+*   ✅ **Multi-Image Aware:** Natively encodes context from multiple input images.
+*   ✅ **Robust Performance:** Diverse training data and loss functions yield versatile embeddings.
+*   ✅ **Strong Vietnamese & Multilingual Focus:** Optimized for Vietnamese with significant en/zh capabilities.
+*   ✅ **Foundation for Advanced AI:** Ideal for next-generation multimodal systems.
 
 ---
 
@@ -73,7 +67,7 @@ Sức mạnh của viOmniQwen đến từ sự kết hợp giữa tập dữ li�
 ```python
 import torch
 from PIL import Image
-# Assume viOmniQwenEmbedder class available after release
+# Assume viOmniQwenEmbedder class is available after release
 # from viOmniQwen_embedder import viOmniQwenEmbedder
 
 # embedder = viOmniQwenEmbedder(checkpoint_path="./path/to/viOmniQwen/", device="cuda")
@@ -85,18 +79,20 @@ prefix_vqa = "<vqa_single>"
 text_input = "What color is the object on the left?"
 image_input = Image.open("image.jpg").convert("RGB")
 
-# Conceptual encoding call
+# Conceptual encoding call - the prefix guides the internal processing
 # mixed_embedding = embedder.encode(text=f"{prefix_vqa} {text_input}", images=[image_input])
-# print(mixed_embedding.shape) # torch.Size([1, 1024])
+# print(mixed_embedding.shape) # Expected: torch.Size([1, 1024])
 
 # --- Example: Text Similarity ---
 prefix_sim = "<text_pair>"
 text_a = "The cat sat on the mat."
 text_b = "A feline rested upon the rug."
 
+# Conceptual encoding calls
 # text_a_embedding = embedder.encode(text=f"{prefix_sim} {text_a}")
 # text_b_embedding = embedder.encode(text=f"{prefix_sim} {text_b}")
 
+# Compute similarity (e.g., cosine)
 # similarity = torch.nn.functional.cosine_similarity(text_a_embedding, text_b_embedding)
 # print(similarity)
 ```
@@ -105,28 +101,31 @@ text_b = "A feline rested upon the rug."
 
 ## Potential Applications
 
-*   **Multimodal RAG:** Truy xuất ngữ cảnh đa phương thức.
-*   **Graph RAG:** Xây dựng đồ thị tri thức đa phương thức.
-*   **Cross-Modal Retrieval:** Tìm kiếm linh hoạt giữa các phương thức.
-*   **Document Intelligence:** Phân tích tài liệu phức tạp.
-*   **Contextual Visual Search:** Tìm kiếm hình ảnh theo ngữ cảnh.
+*   **Multimodal RAG:** Retrieve diverse multimodal context (text passages, images, tables within documents) using unified queries for richer LLM grounding.
+*   **Graph RAG:** Construct knowledge graphs with nodes representing text, images, or multimodal documents, navigable via unified embeddings.
+*   **Cross-Modal Retrieval:** Robustly find images from text queries, text from image queries, or similar multimodal items within a single index.
+*   **Document Intelligence:** Analyze complex documents (e.g., reports, invoices) by capturing visual layout and textual content in one representation.
+*   **Contextual Visual Search:** Enhance image search results by incorporating accompanying textual context during embedding.
 
 ---
 
 ## Development Status & Future Work
 
-*   Đang trong quá trình phát triển tích cực. Checkpoints, code đánh giá, benchmarks, ví dụ sử dụng chi tiết sẽ sớm được phát hành.
-*   Công việc đang diễn ra: Benchmarking toàn diện, khám phá mô hình lớn hơn, tích hợp phương thức khác.
+*   Under active development. Model checkpoints, evaluation code, benchmarks, and detailed usage examples will be released soon.
+*   Ongoing work includes comprehensive benchmarking (Vietnamese, English, cross-lingual tasks), exploring larger base models, and potential integration of other modalities.
 
 ---
 
 ## License
 
-*   Chi tiết giấy phép sẽ được công bố khi phát hành. Có tùy chọn giấy phép thương mại. Liên hệ: **nguyen@hatto.com**.
+*   Licensing details will be announced upon release.
+*   A commercial license option will be available. For inquiries, please contact: **nguyen@hatto.com**.
 
 ---
 
 ## Citation
+
+Please cite this repository URL until a formal publication is available.
 
 ```bibtex
 @misc{viOmniQwen_github_2024,
@@ -135,7 +134,7 @@ text_b = "A feline rested upon the rug."
   year         = {2024},
   publisher    = {GitHub},
   journal      = {GitHub repository},
-  howpublished = {\url{https://github.com/EraX-AI/viOmniQwen}} % Replace with final URL
+  howpublished = {\url{https://github.com/EraX-AI/viOmniQwen}} % Final URL
 }
 
 @misc{faysse2024colpali,
@@ -156,5 +155,4 @@ text_b = "A feline rested upon the rug."
       archivePrefix={arXiv},
       primaryClass={cs.CV}
 }
-
 ```
