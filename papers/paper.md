@@ -16,7 +16,7 @@ header-includes:
   - \usepackage{caption}
   - \captionsetup{font=small}
 ---
-*(Draft - Illustrative Results - Empirical Validation Required)*
+*(Architecture & Hypothesis only. Training ongoing - Empirical Validation Required)*
 
 ## Abstract
 
@@ -173,52 +173,76 @@ The training objective dynamically applies task-specific losses based on prefix 
 
 The overall batch loss is $\mathcal{L}_{\mathrm{batch}} = \frac{1}{B} \sum_{i=1}^{B} \mathcal{L}_{\mathrm{type}(p_i)}$.
 
-### 4.3 Implementation Details
+### 4.3 Implementation Details (oon going):
 
 *   **Hardware:** 4x NVIDIA H100 GPUs (94GB VRAM).
-*   **Framework:** Hugging Face `accelerate` with FSDP (ZeRO-3).
+*   **Framework:** Hugging Face `accelerate` with FSDP ZeRO-3.
 *   **Precision:** `bfloat16` mixed precision, Flash Attention 2.
 *   **Optimizer:** AdamW [@loshchilov2017decoupled].
-*   **LR:** $1 \times 10^{-4}$ initial, cosine decay, 5% warmup.
+*   **LR:** $1 \times 10^{-4}$ initial 5% warmup, with subsequent cosine decay
 *   **Batch:** Per-device 24, grad accum 8 (Global: 768).
 *   **Seq Len:** 8192 tokens.
-*   **Epochs:** 2 (approximately 15 days training).
+*   **Epochs:** 2  - 3 (approximately 15 - 24 days training).
 *   **Regularization:** Weight decay 0.001, max grad norm 1.0.
 *   **Loss Params:** $T=0.07$, $m=0.2$ (base). $\lambda$'s = 1.0.
-*   **Tokenizer:** Extended Qwen-VL tokenizer, embedding layer resized.
+*   **Tokenizer:** Extended Qwen-VL tokenizer with new prefix tokens and embedding model's layer resized.
 
-## 5. Experiments
+Okay, let's rewrite Sections 5, 6, and 7 to reflect the current state (training in progress, benchmarks pending) and clearly frame the discussion around hypotheses seeking validation and community input. This version uses professional language suitable for ArXiv while being transparent about the preliminary nature of the claims.
 
-*(**Disclaimer:** Results in this section are illustrative simulations.)*
+---
 
-### 5.1 Experimental Setup
+## 5. Experimental Design and Evaluation Plan
 
-We evaluate `viPolyQwen` on standard multimodal benchmarks and specific tasks.
+While `viPolyQwen` is currently undergoing extensive training, we outline here the comprehensive evaluation plan designed to rigorously assess its capabilities and validate our core hypotheses upon completion.
 
-*   **Datasets:** MS-COCO 5k [@lin2014microsoft], Flickr30k [@young2014image] (Image-Text Retrieval); ViTextEval Suite (ViSTS) [@nguyen2023vietnamesests] (Vietnamese Text Similarity); DocVQA [@mathew2021docvqa] (Document Context Retrieval Proxy).
-*   **Metrics:** Recall@K (R@K), Mean Rank (MeanR) for retrieval; Spearman correlation ($\rho$) for STS; Page Retrieval Accuracy (Acc@K) for DocVQA context.
-*   **Baselines:** CLIP ViT-L/14 [@radford2021learning], Qwen2-VL-2B (Base MP - Mean Pooling), mCLIP/XLM-R (Multilingual TBD), `viPolyQwen-MeanPool` (Our method w/ Mean Pooling), `viPolyQwen-NCEOnly` (Our method w/ only InfoNCE loss). Conceptual comparison with ColPali [@faysse2024colpali].
+### 5.1 Target Benchmarks and Metrics
 
-### 5.2 Benchmarks & Ablation Studies shall be published shortly
+Our evaluation strategy encompasses standard cross-modal benchmarks, tasks specific to the Vietnamese language, and assessments relevant to document intelligence scenarios:
 
-**Table 1: Zero-Shot Image-Text Retrieval Results.**
-**Table 2: Vietnamese Task Performance (ViSTS).**
-**Table 3: Document Context Retrieval (DocVQA Page Acc@K).**
-**Table 4: Ablation Study Results (Internal Val Set).**
+*   **Image-Text Retrieval (Zero-Shot):** We will evaluate on established datasets like MS-COCO 5k Captions \cite{lin2014microsoft} and Flickr30k \cite{young2014image}. Standard metrics including Recall@K (R@1, R@5, R@10) and Mean Rank (MeanR) will be computed for both Text-to-Image (T->I) and Image-to-Text (I->T) directions.
+*   **Vietnamese Semantic Textual Similarity (STS):** Performance will be measured on the ViSTS subset of the ViTextEval suite \cite{nguyen2023vietnamesests}, using Spearman's rank correlation coefficient ($\rho$) between the cosine similarity of generated embeddings and human judgments.
+*   **Document Context Retrieval (Proxy for Document VQA):** Using datasets like DocVQA \cite{mathew2021docvqa}, we will assess the ability of `viPolyQwen` embeddings to retrieve the correct document page containing the answer to a given visual question. Metrics will include Page Retrieval Accuracy@K (Acc@1, Acc@5). This serves as a proxy for the embedding's utility in supporting downstream document understanding tasks.
+*   **Ablation Studies:** We will utilize a held-out internal validation set (5k samples, representatively sampled from the training distribution) to quantify the individual contributions of key components (Attention Pooling vs. Mean Pooling; Dynamic Loss vs. Single Objective).
 
-## 6. Discussion
+### 5.2 Baselines for Comparison
 
-The simulated experimental results strongly support our central hypothesis: the synergy between prefix-guided dynamic loss optimization and Attention Pooling yields a superior unified multimodal embedding compared to simpler pooling or single-objective training schemes.
+To contextualize `viPolyQwen`'s performance, we plan to compare against several relevant baselines:
 
-*   **Impact of Attention Pooling:** The significant performance drop when using Mean Pooling (`viPolyQwen-MeanPool`, Table 4) underscores its importance. Attention Pooling effectively identifies and emphasizes salient visual/textual features, preventing information dilution and leading to richer 1D embeddings, crucial for complex inputs like documents or text-rich images.
-*   **Impact of Prefix-Guided Dynamic Loss:** The comparison between the full `viPolyQwen` and `viPolyQwen-NCEOnly` demonstrates the value of tailoring the loss function. Explicitly applying task-appropriate losses (MSE for similarity, Triplet for QA grounding) via prefix conditioning results in better overall performance across diverse evaluations (Tables 1-4). The prefixes provide the necessary signal to navigate potentially competing geometric objectives within the unified space $\mathcal{E}$.
-*   **Comparison with Alternatives:** `viPolyQwen` achieves competitive simulated performance against CLIP on standard retrieval while showing substantial gains on tasks requiring different objectives (Vietnamese STS). Compared to multi-vector approaches like ColPali, `viPolyQwen` offers significant architectural simplification, enabling the use of standard vector databases. The strong simulated document retrieval results (Table 3) suggest Attention Pooling effectively captures necessary context within the single vector, potentially rivaling more complex systems in efficiency and ease of deployment.
+*   **Strong Image-Text Models:** CLIP (ViT-L/14) \cite{radford2021learning} as a foundational contrastive learning baseline.
+*   **Base VLM (Simplified Pooling):** The Qwen2-VL-2B-Instruct model \cite{bai2023qwen} with standard mean pooling applied to its final hidden states, projected to the same 1024-d dimension, serving as a direct architectural baseline without our proposed training methodology or pooling.
+*   **Multilingual Models:** Representative multilingual text-image models (e.g., mCLIP adaptations \cite{reimers2020making} or others) for cross-lingual STS evaluation context.
+*   **Ablation Variants:**
+    *   `viPolyQwen-MeanPool`: Our model trained with the full prefix-guided dynamic loss suite but utilizing mean pooling instead of Attention Pooling.
+    *   `viPolyQwen-NCEOnly`: Our model trained with Attention Pooling but employing only the InfoNCE loss component ($\mathcal{L}_{\text{NCE}}$) for all data types, disabling the dynamic loss mechanism.
+*   **Conceptual Comparison:** We will qualitatively discuss the architectural trade-offs and potential performance implications relative to multi-vector paradigms like ColPali \cite{faysse2024colpali}, particularly concerning system complexity and deployment efficiency, acknowledging that direct metric comparison might require reimplementation or reliance on published results.
+
+## 6. Hypotheses and Anticipated Outcomes
+
+This research is driven by several core hypotheses regarding the synergistic effects of our proposed methodology. The ongoing training and subsequent benchmarking campaign are designed explicitly to challenge and validate these propositions. We present them here to invite discussion and scrutiny from the research community:
+
+1.  **H1: Attention Pooling Yields Superior Unified Embeddings:** We hypothesize that the learnable Attention Pooling mechanism (Section 3.2) will capture significantly more salient visual and textual information from the VLM encoder's output sequence ($\mathbf{H}$) compared to standard mean pooling. By dynamically weighting features based on learned importance ($\mathbf{v}_a$), it should produce a richer, more discriminative single 1D embedding ($\mathbf{e}$), particularly for information-dense inputs like documents containing text or complex visual scenes. We anticipate that the `viPolyQwen` (full model) will substantially outperform `viPolyQwen-MeanPool` across most retrieval and similarity tasks in our ablation study (Table 4 placeholder).
+
+2.  **H2: Prefix-Guided Dynamic Loss Enhances Task Versatility:** We posit that explicitly conditioning the training on task type via prefixes ($p_i$) and applying tailored loss functions ($\mathcal{L}_{\text{type}(p_i)}$) is crucial for achieving high performance across the diverse tasks incorporated in our training data $\mathcal{D}$. Simply using a single contrastive objective like InfoNCE for all data types (`viPolyQwen-NCEOnly`) is expected to be suboptimal compared to the full dynamic loss strategy, which enforces task-specific geometric constraints within the unified embedding space $\mathcal{E}$. We expect the full `viPolyQwen` model to show demonstrable gains over the `viPolyQwen-NCEOnly` variant, especially on tasks like STS (requiring $\mathcal{L}_{\text{MSE}}$) and potentially QA grounding tasks (benefiting from $\mathcal{L}_{\text{Triplet}}$'s margin).
+
+3.  **H3: Unified Single-Vector Representation is Competitive and Efficient:** We hypothesize that the combination of a powerful VLM foundation, diverse multi-task dynamic training, and sophisticated Attention Pooling enables `viPolyQwen` to encode sufficient multimodal nuance within a single 1024-d vector to be highly competitive with state-of-the-art models, including conceptually different multi-vector architectures like ColPali \cite{faysse2024colpali}, especially for common retrieval tasks. While multi-vector approaches might theoretically offer higher granularity, we anticipate that `viPolyQwen`'s single-vector representation will provide a compelling balance of performance and significant deployment advantages (standard indexing/search infrastructure, lower latency potential). We expect `viPolyQwen` to perform competitively on document context retrieval benchmarks (Table 3 placeholder) while being architecturally simpler.
+
+4.  **H4: Strong Performance on Target Language (Vietnamese):** Given the substantial proportion of Vietnamese data in $\mathcal{D}$ and the task-aware training, we expect `viPolyQwen` to establish a strong baseline for Vietnamese multimodal embedding tasks, significantly outperforming general multilingual models not specifically optimized for the language (Table 2 placeholder).
+
+**Call for Discussion:** The training process for such a large-scale model is resource-intensive. We present these hypotheses and the experimental design *prior* to obtaining final results to actively solicit feedback from the community. We welcome insights, suggestions for additional relevant benchmarks or baselines, and critical perspectives on the potential strengths and weaknesses of our proposed approach compared to existing paradigms. Validating these hypotheses rigorously is the primary goal of our ongoing work.
 
 ## 7. Conclusion and Future Work
 
-We introduced `viPolyQwen`, a unified multimodal embedding model employing prefix-guided dynamic loss and Attention Pooling. By explicitly conditioning training on task type and intelligently aggregating features, `viPolyQwen` learns a single, versatile 1024-d embedding space. Our simulated results indicate superior performance over baseline methods and competitive potential against state-of-the-art models, particularly for Vietnamese and complex multimodal inputs, while offering architectural simplification compared to multi-vector approaches.
+We have introduced `viPolyQwen`, a novel framework designed to learn powerful, unified multimodal embeddings within a single 1024-dimensional vector space. Its core innovations lie in the synergistic combination of a large, diverse multi-task training dataset, an explicit prefix-guided mechanism for dynamically selecting task-optimized loss functions, and an Attention Pooling layer for intelligently aggregating salient features from the underlying VLM encoder. Our central hypothesis is that this approach yields embeddings that are not only versatile across different modalities and tasks (including complex document understanding and Vietnamese language processing) but also offer significant advantages in terms of architectural simplicity and deployment efficiency compared to multi-vector representations.
 
-Immediate future work involves rigorous empirical validation of these findings on public benchmarks. Further research includes exploring larger base models and extending the dynamic loss framework. Model checkpoints and evaluation code will be released following validation.
+The immediate and crucial next step is the completion of the ongoing training phase followed by rigorous empirical validation through the comprehensive benchmarking plan outlined in Section 5. This will involve comparing `viPolyQwen` against strong baselines and performing detailed ablation studies to definitively quantify the contribution of each component (Attention Pooling, Dynamic Loss). We are committed to releasing the model checkpoints, evaluation code, and detailed usage guidelines to the community upon successful validation of our core hypotheses.
+
+**Future Directions:** Contingent on positive benchmarking results, several exciting avenues exist:
+*   **Scaling:** Investigating the performance gains from applying the `viPolyQwen` methodology to larger, more powerful base VLMs.
+*   **Modality Expansion:** Exploring the integration of additional modalities, such as **audio** (e.g., for audio-visual retrieval or spoken document analysis) and potentially **video** (for action recognition retrieval or video summarization embedding), into the unified embedding space using similar principles of task-aware dynamic loss training. The goal would be to build a truly comprehensive, production-ready multimodal embedding foundation.
+*   **Downstream Task Integration:** Demonstrating the practical benefits of `viPolyQwen` embeddings in end-to-end applications like multimodal RAG systems, cross-modal search engines, and document intelligence platforms.
+*   **Refining Attention & Loss:** Further research into more sophisticated attention mechanisms or adaptive methods for balancing the dynamic loss components.
+
+We believe the principles underlying `viPolyQwen` offer a promising direction towards building more capable, efficient, and deployable multimodal AI systems.
 
 ## References
 
