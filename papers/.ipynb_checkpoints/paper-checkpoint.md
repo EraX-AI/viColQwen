@@ -10,7 +10,7 @@ header-includes:
   - \usepackage{hyperref}
   - \usepackage{float}
   - \usepackage{geometry}
-  - \geometry{margin=0.75in}
+  - \geometry{margin=0.85in}
   - \usepackage{setspace}
   - \setstretch{0.95}
   - \usepackage{caption}
