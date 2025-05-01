@@ -1,6 +1,6 @@
 ---
 title: "viPolyQwen: Synergizing Prefix-Guided Dynamic Loss Optimization and Attention Pooling for Unified Multimodal Embeddings"
-author: "Nguyen Anh Nguyen\\* (EraX) & Gtel Mobile JSC (GMobile)"
+author: "Nguyen Anh Nguyen\\* (EraX) & Gtel Mobile JSC (GMobile) - Vietnam."
 date: "\\*Corresponding Author: nguyen@hatto.com"
 header-includes:
   - \usepackage{amsmath}
@@ -16,11 +16,22 @@ header-includes:
   - \usepackage{caption}
   - \captionsetup{font=small}
 ---
-*(Architecture & Hypothesis only. Training ongoing - Empirical Validation Required)*
 
-## Abstract
+\begin{center}
+\Large\textbf{Abstract}
+\end{center}
 
-Multimodal representation learning strives to bridge the semantic gap between disparate data types like text and images. While Vision-Language Models (VLMs) have advanced this frontier, generating unified embeddings that are both versatile across diverse tasks (similarity, retrieval, QA) and computationally efficient remains a significant challenge. Existing paradigms often resort to task-specific models, separate embedding spaces, or complex multi-vector architectures, potentially increasing system complexity and latency. We propose `viPolyQwen`, an approach for learning a single, high-dimensional (1024-d), unified multimodal embedding space $\mathcal{E}$. Building upon the Qwen2-VL-2B-Instruct foundation model, our proposed methodology combines: (1) a heterogeneous dataset ($\mathcal{D}$, $|\mathcal{D}| > 11 \times 10^6$) encompassing five distinct multimodal interaction types (text similarity, instruction following, OCR, single/multi-turn VQA), with emphasis on Vietnamese alongside multilingual data; (2) a **prefix-guided dynamic mixed-loss optimization strategy** that conditions the learning process, tailoring the objective function ($\mathcal{L}_{\mathrm{NCE}}$, $\mathcal{L}_{\mathrm{Triplet}}$, $\mathcal{L}_{\mathrm{MSE}}$, $\mathcal{L}_{\mathrm{Cos}}$) on a per-sample basis during training via discrete task prefixes $p_i$; and (3) an **Attention Pooling** mechanism that aggregates information from the VLM encoder's output sequence $\mathbf{H}$, weighting features based on learned importance ($\alpha_i$ weights for $\mathbf{h}_i$). We hypothesize that this synergistic approach may yield an architecturally simpler embedding model while potentially outperforming standard pooling baselines. As empirical validation is currently in progress, we present this work to stimulate discussion on unified multimodal embeddings, particularly for applications involving complex, text-rich visual inputs.
+\setlength{\leftskip}{2em}
+\setlength{\rightskip}{2em}
+\noindent
+\begin{center}
+\textit{(This paper is Architecture \& Hypothesis. Training is still ongoing. Empirical Validation Required.)}
+\end{center}
+
+\noindent Multimodal representation learning strives to bridge the semantic gap between disparate data types like text and images. While Vision-Language Models (VLMs) have advanced this frontier, generating unified embeddings that are both versatile across diverse tasks (similarity, retrieval, QA) and computationally efficient remains a significant challenge. Existing paradigms often resort to task-specific models, separate embedding spaces, or complex multi-vector architectures, potentially increasing system complexity and latency. We propose `viPolyQwen`, an approach for learning a single, high-dimensional (1024-d), unified multimodal embedding space $\mathcal{E}$. Building upon the Qwen2-VL-2B-Instruct foundation model, our proposed methodology combines: (1) a heterogeneous dataset ($\mathcal{D}$, $|\mathcal{D}| > 11 \times 10^6$) encompassing five distinct multimodal interaction types (text similarity, instruction following, OCR, single/multi-turn VQA), with emphasis on Vietnamese alongside multilingual data; (2) a **prefix-guided dynamic mixed-loss optimization strategy** that conditions the learning process, tailoring the objective function ($\mathcal{L}_{\mathrm{NCE}}$, $\mathcal{L}_{\mathrm{Triplet}}$, $\mathcal{L}_{\mathrm{MSE}}$, $\mathcal{L}_{\mathrm{Cos}}$) on a per-sample basis during training via discrete task prefixes $p_i$; and (3) an **Attention Pooling** mechanism that aggregates information from the VLM encoder's output sequence $\mathbf{H}$, weighting features based on learned importance ($\alpha_i$ weights for $\mathbf{h}_i$). We hypothesize that this synergistic approach may yield an architecturally simpler embedding model while potentially outperforming standard pooling baselines. As empirical validation is currently in progress, we present this work to stimulate discussion on unified multimodal embeddings, particularly for applications involving complex, text-rich visual inputs.
+
+\setlength{\leftskip}{0em}
+\setlength{\rightskip}{0em}
 
 ## 1. Introduction
 
