@@ -36,35 +36,81 @@ logger.info(f"Starting viPolyQwen Usage Script on device: {DEVICE}")
 logger.info(f"Attempting to load model from: {MODEL_PATH}")
 
 # -- Load Model và Processor --
-try:
-    from model import ViPolyQwenEmbedder as ViPolyQwenEmbedder
-    logger.info(f"Imported ViPolyQwenEmbedder from model.py")
+def load_model_directly(MODEL_PATH):
+    """
+    Load the model completely manually without using from_pretrained.
+    This bypasses the problematic method entirely.
+    """
+    try:
+        # Import your model class
+        from model import ViPolyQwenEmbedder, ViPolyQwenConfig
+        
+        logger.info(f"Loading from {MODEL_PATH}")
+        
+        # 1. Load the processor
+        processor = AutoProcessor.from_pretrained(MODEL_PATH, trust_remote_code=True)
+        logger.info("Processor loaded successfully")
+        
+        # 2. Load or create config
+        try:
+            config_path = os.path.join(MODEL_PATH, 'config.json')
+            if os.path.exists(config_path):
+                import json
+                with open(config_path, 'r') as f:
+                    config_dict = json.load(f)
+                
+                config = ViPolyQwenConfig(
+                    base_model_name_or_path=config_dict.get('base_model_name_or_path', MODEL_PATH),
+                    embed_dim=config_dict.get('embed_dim', 1024),
+                    pooling_strategy=config_dict.get('pooling_strategy', 'attention'),
+                    pad_token_id=config_dict.get('pad_token_id', None)
+                )
+                logger.info(f"Loaded config from {config_path}")
+            else:
+                config = ViPolyQwenConfig(
+                    base_model_name_or_path=MODEL_PATH,
+                    embed_dim=1024,
+                    pooling_strategy='attention'
+                )
+                logger.info("Created default config (no config.json found)")
+        except Exception as e:
+            logger.warning(f"Error loading config: {e}, creating default")
+            config = ViPolyQwenConfig(
+                base_model_name_or_path=MODEL_PATH,
+                embed_dim=1024,
+                pooling_strategy='attention'
+            )
+        
+        # 3. Determine dtype and device
+        device = DEVICE
+        dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+        
+        # 4. Create model instance
+        logger.info(f"Creating model instance with config: embed_dim={config.embed_dim}, pooling={config.pooling_strategy}")
+        model = ViPolyQwenEmbedder(
+            config=config,
+            model_name_or_path=MODEL_PATH
+        )
+        
+        # 5. Assign processor to model
+        model.processor = processor
+        
+        # 6. Move to device and set dtype
+        model = model.to(device=device, dtype=dtype)
+        model.eval()
+        
+        logger.info(f"Model loaded successfully and moved to {device} with {dtype}")
+        return model
+        
+    except Exception as e:
+        logger.error(f"Error loading model: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise
 
-    processor = AutoProcessor.from_pretrained(MODEL_PATH, trust_remote_code=True)
-    logger.info(f"Processor loaded successfully.")
-
-    # Load model viPolyQwen đã huấn luyện
-    embedder = ViPolyQwenEmbedder.from_pretrained(
-        MODEL_PATH,
-        embed_dim=EXPECTED_EMBED_DIM,
-        processor = processor,
-        trust_remote_code=True
-    )
-    logger.info(f"Model loaded successfully.")
-
-    embedder.to(DEVICE)
-    embedder.eval()
-    logger.info(f"Model moved to {DEVICE} and set to evaluation mode.")
-
-except FileNotFoundError:
-    logger.error(f"Fatal Error: Model or processor files not found at {MODEL_PATH}. Please check the path.")
-    exit()
-except Exception as e:
-    logger.error(f"Fatal Error: Could not load model or processor. Error: {e}")
-    import traceback
-    logger.error(traceback.format_exc())
-    exit()
+model = load_model_directly(MODEL_PATH)
 ```
+
 
 # Phần 2: Tạo Embeddings cho Lưu trữ (Mô phỏng Vector DB)
 
