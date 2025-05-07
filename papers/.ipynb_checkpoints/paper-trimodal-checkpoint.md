@@ -245,6 +245,8 @@ $$\mathbf{e}_{\text{task}}(x, t) = f_\theta(x, p_t)$$
 
 This dual interface balances simplicity for common use cases with the power of task-specific optimization when required.
 
+![viPolyQwen Architecture](viPolyQwen-Architecture-Trimodal.png){width=80% .center}
+
 ## 4. Training Paradigm
 
 ### 4.1 Dataset Composition
