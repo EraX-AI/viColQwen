@@ -85,11 +85,18 @@ The `viPolyQwen` embedder builds upon the `Qwen/Qwen2-VL-2B-Instruct` model [3].
 
 2.  **Attention Pooling Layer:** This layer (Section 3.2) aggregates the hidden state sequence $\mathbf{H}$ into a single context vector $\mathbf{c} \in \mathbb{R}^{D_{\mathrm{hidden}}}$.
 
-3.  **Projection Head (`self.proj`):** A trainable projection head maps the pooled context vector $\mathbf{c}$ to the target embedding dimension $D_{\mathrm{embed}}=1024$. It consists of a linear transformation followed by Layer Normalization [16]:
+3.  **Enhanced Multi-Layer Projection Head:** A sophisticated trainable projection head transforms the pooled context vector $\mathbf{c}$ into the target embedding space through a series of transformations:
 
-    $$\mathbf{p} = \text{LayerNorm}(\mathbf{W}_{\mathrm{proj}} \mathbf{c})$$
+    $$\mathbf{p} = \text{LayerNorm}(\mathbf{W}_{\mathrm{proj2}} \cdot \text{GELU}(\text{LayerNorm}(\mathbf{W}_{\mathrm{proj1}} \mathbf{c})))$$
 
-    where $\mathbf{W}_{\mathrm{proj}} \in \mathbb{R}^{D_{\mathrm{embed}} \times D_{\mathrm{hidden}}}$ is the learnable weight matrix of the linear layer (bias is omitted).
+    where:
+    - $\mathbf{W}_{\mathrm{proj1}} \in \mathbb{R}^{D_{\mathrm{embed}} \times D_{\mathrm{hidden}}}$ is the first linear transformation
+    - $\text{GELU}$ introduces non-linearity to enhance feature expressivity
+    - The intermediate layer normalization stabilizes training dynamics
+    - $\mathbf{W}_{\mathrm{proj2}} \in \mathbb{R}^{D_{\mathrm{embed}} \times D_{\mathrm{embed}}}$ is the second linear projection
+    - The final layer normalization ensures consistent feature scales
+
+    This enhanced projection architecture with intermediate activations and multiple normalization layers is designed to better preserve semantic information during dimensionality reduction, potentially allowing for more nuanced representation of multimodal concepts.
 
 4.  **L2 Normalization:** The final embedding $\mathbf{e} \in \mathbb{R}^{D_{\mathrm{embed}}}$ is obtained by L2 normalizing the projected vector $\mathbf{p}$:
 
@@ -124,9 +131,27 @@ To derive the context vector $\mathbf{c}$ from the hidden state sequence $\mathb
 
 This mechanism is designed to allow the model to focus on potentially informative parts of the sequence (e.g., keywords, salient visual regions, text-in-image) when constructing the 1D representation.
 
-### 3.3 Projection and Normalization
+### 3.3 Enhanced Multi-Layer Projection Head
 
-The projection head reduces dimensionality and adapts the pooled representation for the embedding space via a learned linear transform $\mathbf{W}_{\mathrm{proj}}$ and LayerNorm. Final L2 normalization ensures suitability for cosine similarity.
+The projection head has been significantly enhanced from a simple linear transformation to a multi-layer architecture that introduces non-linearity and additional normalization. This design choice is motivated by several theoretical and practical considerations:
+
+1. **Expressive Power**: The introduction of the GELU non-linearity between linear transformations enables the projection head to learn more complex transformations from the high-dimensional hidden space to the embedding space, potentially capturing intricate semantic relationships that a linear projection might miss.
+
+2. **Feature Disentanglement**: Multiple layers with non-linearities can help disentangle features in the representation space, separating task-specific information from modality-specific information, thereby enhancing the unified nature of the resulting embeddings.
+
+3. **Gradient Flow**: The intermediate layer normalization helps stabilize gradient flow during training, potentially addressing challenges with optimizing representations across diverse loss functions and task types.
+
+4. **Representation Preservation**: The sophisticated architecture may better preserve important semantic information during dimensionality reduction from $D_{\mathrm{hidden}}$ (2048) to $D_{\mathrm{embed}}$ (1024).
+
+Formally, the projection head implements the following transformations:
+
+1. First linear transformation: $\mathbf{z}_1 = \mathbf{W}_{\mathrm{proj1}} \mathbf{c}$
+2. First layer normalization: $\mathbf{z}_2 = \text{LayerNorm}(\mathbf{z}_1)$
+3. GELU activation: $\mathbf{z}_3 = \text{GELU}(\mathbf{z}_2)$
+4. Second linear transformation: $\mathbf{z}_4 = \mathbf{W}_{\mathrm{proj2}} \mathbf{z}_3$
+5. Final layer normalization: $\mathbf{p} = \text{LayerNorm}(\mathbf{z}_4)$
+
+This multi-layer projection architecture represents a significant enhancement over simpler projection approaches used in many prior embedding models, potentially allowing for more powerful and nuanced unified representations across our diverse multimodal tasks.
 
 ### 3.4 Prefix-Guided Input Representation & Conditioning (Training)
 
@@ -212,7 +237,7 @@ $$\mathbf{e}_{\text{task}}(x, t) = f_\theta(x, p_t)$$
 
 This dual interface balances simplicity for common use cases with the power of task-specific optimization when required.
 
-![viPolyQwen Architecture](viPolyQwen-Architecture.png){width=80% .center}
+![viPolyQwen Architecture](viPolyQwen-Architecture-Dualmodal.png){width=80% .center}
 
 
 ## 4. Training Paradigm
@@ -264,33 +289,41 @@ The overall batch loss is $\mathcal{L}_{\mathrm{batch}} = \frac{1}{B} \sum_{i=1}
 *   **Framework:** Hugging Face `accelerate` with FSDP ZeRO-3.
 *   **Precision:** `bfloat16` mixed precision, Flash Attention 2.
 *   **Optimizer:** AdamW [17].
-*   **Learning Rate:** $1 \times 10^{-4}$ initial 5% warmup, with subsequent cosine decay
-*   **Batch Size:** Per-device 24, gradient accumulation 8 (Global: 768).
-*   **Sequence Length:** 8192 tokens.
-*   **Training Duration:** 2-3 epochs (approximately 15-24 days).
-*   **Regularization:** Weight decay 0.001, max gradient norm 1.0.
+*   **Learning Rate:** $1 \times 2^{-5}$ initial 15% warmup, with subsequent cosine decay
+*   **Batch Size:** Per-device 16, gradient accumulation 4 (Global: 256).
+*   **Sequence Length:** 12288 tokens.
+*   **Training Duration:** 2 epochs (approximately 15 days).
+*   **Regularization:** Weight decay 0.1, max gradient norm 3.0.
 *   **Loss Parameters:** $T=0.07$, $m=0.2$ (base). $\lambda$'s = 1.0.
 *   **Tokenizer:** Extended Qwen-VL tokenizer with new prefix tokens and embedding model's layer resized.
 
-### 4.4 Complementary Roles of Attention Pooling and Prefix-Guided Conditioning
+### 4.4 Complementary Roles of Attention Pooling and Enhanced Projection Head
 
-While both Attention Pooling and prefix-guided conditioning contribute to improved representations, they serve distinct functional roles within the model architecture. Understanding their synergistic relationship clarifies the overall design philosophy:
+While both Attention Pooling and the enhanced projection head contribute to improved representations, they serve distinct but complementary functional roles within the model architecture:
 
 **Attention Pooling** focuses on the problem of information extraction from the encoder's output sequence. It addresses the question: "How do we best summarize the sequence of hidden states into a single vector?" By learning to assign attention weights $\alpha_i$ to each token/patch representation $\mathbf{h}_i$, it creates a nuanced weighted average that emphasizes the most salient features for the final embedding.
 
-In contrast, **Prefix-Guided Conditioning** addresses the problem of task disambiguation and appropriate loss application. It answers the question: "Which optimization constraints should be prioritized for this particular input?" The prefix tokens signal to the model which task family the current input belongs to, enabling the application of the most appropriate loss function combination.
+The **Enhanced Multi-Layer Projection Head** addresses a different concern: "How do we best transform the pooled representation into an embedding that preserves semantic structure while reducing dimensionality?" The sophisticated projection architecture with non-linearities and multiple normalization layers creates a more expressive mapping function that can potentially:
 
-The relationship between these mechanisms can be expressed formally as:
+1. Disentangle correlated features from the VLM's hidden states
+2. Accentuate task-relevant information while suppressing noise
+3. Structure the final embedding space to better accommodate the conflicting geometric constraints imposed by different loss functions
 
-1. **Attention Pooling** transforms the encoder hidden states into a context vector:
+The relationship between these mechanisms produces a cascade of information refinement:
+
+1. **Attention Pooling** transforms the encoder hidden states into a context vector by identifying important tokens/patches:
    
    $$\mathbf{c} = \sum_{i=1}^{N} \alpha_i \mathbf{h}_i$$
 
-2. **Prefix-Guided Conditioning** influences which loss function is applied to this context vector after projection:
+2. **Enhanced Projection Head** further refines this vector through a series of non-linear transformations:
+   
+   $$\mathbf{p} = \text{LayerNorm}(\mathbf{W}_{\mathrm{proj2}} \cdot \text{GELU}(\text{LayerNorm}(\mathbf{W}_{\mathrm{proj1}} \mathbf{c})))$$
+
+3. **Prefix-Guided Conditioning** influences which loss function is applied to this projected vector:
    
    $$\mathcal{L} = \mathcal{L}_{\text{type}(p_i)}(f_\theta(x'_i), f_\theta(y'_i))$$
 
-This complementary design enables a form of "dual adaptation" - Attention Pooling adapts the feature extraction process to each input's content, while prefix conditioning adapts the optimization process to each input's task structure.
+This complementary design enables a form of "multi-level adaptation" - Attention Pooling adapts the feature extraction process, the enhanced projection head adapts the feature transformation process, and prefix conditioning adapts the optimization process - all working together to create a unified embedding space capable of representing diverse multimodal inputs.
 
 ## 5. Experimental Design and Evaluation Plan
 
@@ -303,7 +336,7 @@ Our evaluation strategy encompasses standard cross-modal benchmarks, tasks speci
 *   **Image-Text Retrieval (Zero-Shot):** Evaluation on established datasets like MS-COCO 5k Captions [18] and Flickr30k [19]. Standard metrics including Recall@K (R@1, R@5, R@10) and Mean Rank (MeanR) will be computed for both Text-to-Image (T->I) and Image-to-Text (I->T) directions.
 *   **Vietnamese Semantic Textual Similarity (STS):** Performance will be measured on the ViSTS subset of the ViTextEval suite [20], using Spearman's rank correlation coefficient ($\rho$) between the cosine similarity of generated embeddings and human judgments.
 *   **Document Context Retrieval (Proxy for Document VQA):** Using datasets like DocVQA [21], we will assess the ability of embeddings to retrieve document pages containing answers to visual questions. Metrics will include Page Retrieval Accuracy@K (Acc@1, Acc@5), serving as a proxy for the embedding's utility in supporting document understanding tasks.
-*   **Ablation Studies:** A held-out internal validation set (5k samples) will be used to quantify the individual contributions of key components (Attention Pooling vs. Mean Pooling; Dynamic Loss vs. Single Objective).
+*   **Ablation Studies:** A held-out internal validation set (5k samples) will be used to quantify the individual contributions of key components (Attention Pooling vs. Mean Pooling; Dynamic Loss vs. Single Objective; Enhanced Projection vs. Simple Projection).
 
 ### 5.2 Baselines for Comparison
 
@@ -315,17 +348,19 @@ To contextualize the performance of our approach, we plan to compare against sev
 *   **Ablation Variants:**
     *   `viPolyQwen-MeanPool`: Our model trained with the full prefix-guided dynamic loss suite but utilizing mean pooling instead of Attention Pooling.
     *   `viPolyQwen-NCEOnly`: Our model trained with Attention Pooling but employing only the InfoNCE loss component for all data types.
+    *   `viPolyQwen-SimpleProj`: Our model with the simplified projection head (single linear layer + layer norm) instead of the enhanced multi-layer architecture.
 *   **Conceptual Comparison:** We will qualitatively discuss architectural trade-offs and potential performance implications relative to multi-vector paradigms like ColPali [5], particularly concerning system complexity and deployment efficiency.
 
-### 5.3 Evaluating the Specific Contributions of Prefix-Guided Conditioning
+### 5.3 Evaluating the Specific Contributions of Prefix-Guided Conditioning and Enhanced Projection
 
-To rigorously assess the impact of our prefix-guided approach, we will include additional experimental conditions focused specifically on this mechanism:
+To rigorously assess the impact of our proposed architecture components, we will include additional experimental analyses:
 
-*   **Implicit Task Inference**: A model variant trained without explicit prefixes that must infer task type from input structure alone.
-*   **Fixed Loss Weighting**: A model using the same loss combination (weighted sum of all loss components) for all samples, regardless of task type.
+*   **Implicit Task Inference vs. Prefix Conditioning**: A model variant trained without explicit prefixes that must infer task type from input structure alone, compared against our prefix-guided approach.
+*   **Simple vs. Enhanced Projection Head**: Comparative analysis of the same model architecture with simple linear projection versus our enhanced multi-layer projection across all benchmark tasks, to isolate the contribution of the projection head's expressivity.
+*   **Fixed Loss Weighting vs. Dynamic Selection**: A model using the same loss combination (weighted sum of all loss components) for all samples, regardless of task type, compared against our dynamic task-specific loss selection approach.
 *   **Prefix Ablation by Task**: Selective removal of specific prefixes to measure their impact on corresponding task performance.
 
-For each variant, we will evaluate both task-specific performance (e.g., OCR accuracy, similarity regression) and cross-task generalization to quantify how prefix-guided dynamic loss optimization contributes to the model's capabilities.
+For each variant, we will evaluate both task-specific performance (e.g., OCR accuracy, similarity regression) and cross-task generalization to quantify how each architectural component contributes to the model's unified multimodal capabilities.
 
 ## 6. Research Hypotheses
 
@@ -343,11 +378,13 @@ This research explores several hypotheses regarding our proposed methodology. Th
 
 6.  **H6: On Conflicting Geometric Constraints:** We propose that different task types inherently benefit from different loss functions due to their distinct geometric requirements in embedding space. The dynamic loss selection mechanism should demonstrate measurable advantages over applying any single loss function across all tasks, or even over applying a fixed weighted combination of losses.
 
+7.  **H7: On the Impact of Enhanced Projection Architecture:** We hypothesize that the non-linear multi-layer projection head with intermediate normalization layers will outperform a simple linear projection, particularly for tasks requiring fine-grained semantic distinctions. The enhanced expressivity may better preserve key information during dimensionality reduction and help resolve conflicts between different task geometries in the shared embedding space.
+
 **Call for Discussion:** As the training process for such a large-scale model requires significant resources, we present these hypotheses and our experimental design prior to obtaining final results to invite feedback from the community. We welcome suggestions for additional benchmarks, baselines, or insights regarding our proposed approach.
 
 ## 7. Conclusion and Future Directions
 
-In this paper, we have introduced `viPolyQwen`, a framework for learning unified multimodal embeddings within a single vector space. The approach integrates three key components: a diverse multi-task training dataset, a prefix-guided mechanism for dynamically selecting task-optimized loss functions, and an Attention Pooling layer for feature aggregation. The central hypothesis is that this integration might yield embeddings that are versatile across different modalities and tasks while maintaining architectural simplicity.
+In this paper, we have introduced `viPolyQwen`, a framework for learning unified multimodal embeddings within a single vector space. The approach integrates three key components: a diverse multi-task training dataset, a prefix-guided mechanism for dynamically selecting task-optimized loss functions, and an Attention Pooling layer for feature aggregation, complemented by an enhanced multi-layer projection head. The central hypothesis is that this integration might yield embeddings that are versatile across different modalities and tasks while maintaining architectural simplicity.
 
 The immediate next step is completing the ongoing training phase, followed by rigorous empirical validation through the evaluation plan outlined in Section 5. This will involve comparing our approach against established baselines and conducting ablation studies to understand the contribution of each component. Upon completion of this validation, we plan to release model checkpoints, evaluation code, and usage guidelines to facilitate further research.
 
@@ -356,9 +393,10 @@ The immediate next step is completing the ongoing training phase, followed by ri
 *   **Scaling Effects:** Investigating how the proposed methodology performs when applied to larger foundation models.
 *   **Modality Expansion:** Exploring the potential integration of additional modalities (e.g., audio, video) into the unified embedding space using similar principles.
 *   **Application Studies:** Examining the practical benefits of the proposed embeddings in downstream applications such as multimodal retrieval systems and document understanding platforms.
-*   **Architectural Refinements:** Further research into attention mechanisms and loss formulations to enhance representation quality.
+*   **Architectural Refinements:** Further research into attention mechanisms, projection head designs, and loss formulations to enhance representation quality.
 *   **Adaptive Prefix Inference:** Developing mechanisms that could automatically infer the most appropriate prefix during inference time based on input characteristics, potentially offering task-optimized embeddings without requiring explicit user specification.
 *   **Theoretical Analysis:** Deeper mathematical analysis of how different loss functions shape the embedding space geometry and how prefix-guided conditioning mediates between potentially conflicting geometric constraints.
+*   **Projection Architecture Optimization:** Investigating optimal depth, width, and activation functions for the projection head to balance expressivity with computational efficiency.
 
 We hope that the principles and methodologies proposed in this work contribute to the ongoing conversation about efficient, versatile multimodal representations, particularly for complex inputs that span multiple modalities.
 
