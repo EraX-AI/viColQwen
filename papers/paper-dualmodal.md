@@ -234,6 +234,8 @@ This dual interface balances simplicity for common use cases with the power of t
 
 ## 4. Training Paradigm
 
+![viPolyQwen Architecture](viPolyQwen-Architecture-Dualmodal.png){width=80% .center}
+
 ### 4.1 Dataset Composition
 
 The model is trained on a composite dataset $\mathcal{D}$ (>11M samples) covering:
