@@ -23,7 +23,7 @@ header-includes:
 
 \setlength{\leftskip}{2em}
 \setlength{\rightskip}{2em}
-\noindent Multimodal representation learning aims to bridge semantic gaps between diverse data types such as text and images. Despite advances in Vision-Language Models (VLMs), generating unified embeddings that excel across varied tasks while remaining computationally efficient poses significant challenges. Existing approaches often resort to task-specific models, separate embedding spaces, or complex multi-vector architectures, increasing system complexity and inference latency. We propose `viPolyQwen`, a novel approach for learning a unified, high-dimensional (1024-d) multimodal embedding space built upon the Qwen2-VL-2B-Instruct foundation model. Our key innovations include: (1) a heterogeneous dataset ($\mathcal{D}$, $|\mathcal{D}| > 11 \times 10^6$) spanning five distinct multimodal interaction types, with substantial Vietnamese content alongside multilingual data; (2) a **Dynamic Loss Equilibrium (DLE)** framework combining prefix-guided task conditioning with adaptive loss weighting that balances InfoNCE, MSE regression, ranking losses, and triplet margin components through both explicit weight parameters ($\lambda_{\text{score}}$, $\lambda_{\text{rank}}$) and implicit task-specific adaptation; and (3) an **Attention Pooling** mechanism that selectively aggregates information from the encoder's output sequence based on learned importance. Experimental results demonstrate that our approach yields architecturally simpler embeddings while outperforming standard pooling baselines across text similarity (+4.8%), cross-modal retrieval (+8.9% on MS-COCO T→I), and specialized tasks like OCR and VQA. The synergy between dynamic loss equilibrium, attention-based feature selection, and enhanced multi-layer projection creates a robust yet flexible embedding system particularly effective for semantically complex, multimodal inputs.
+\noindent Multimodal representation learning aims to bridge semantic gaps between diverse data types such as text and images. Despite advances in Vision-Language Models (VLMs), generating unified embeddings that excel across varied tasks while remaining computationally efficient poses significant challenges. Existing approaches often resort to task-specific models, separate embedding spaces, or complex multi-vector architectures, increasing system complexity and inference latency. We propose `viPolyQwen`, a novel approach for learning a unified, high-dimensional (1024-d) multimodal embedding space built upon the Qwen2-VL-2B-Instruct foundation model. Our key innovations include: (1) a heterogeneous dataset ($\mathcal{D}$, $|\mathcal{D}| > 11 \times 10^6$) spanning five distinct multimodal interaction types, with substantial Vietnamese content alongside multilingual data; (2) a **Dynamic Loss Equilibrium (DLE)** framework combining prefix-guided task conditioning with adaptive loss weighting that balances InfoNCE, MSE regression, ranking losses, and triplet margin components through both explicit weight parameters ($\lambda_{\text{score}}$, $\lambda_{\text{rank}}$) and implicit task-specific adaptation; and (3) an **Attention Pooling** mechanism that selectively aggregates information from the encoder's output sequence based on learned importance. The synergy between dynamic loss equilibrium, attention-based feature selection, and enhanced multi-layer projection creates a robust yet flexible embedding system particularly effective for semantically complex, multimodal inputs.
 
 \setlength{\leftskip}{0em}
 \setlength{\rightskip}{0em}
@@ -64,7 +64,7 @@ Our work builds upon and relates to several research directions:
 
 **Adaptive Loss Functions and Weighting.** Recent work in adaptive loss weighting [13, 14] has demonstrated the benefits of dynamically adjusting relative contributions of loss components. However, most approaches focus on implicit adaptation through uncertainty estimation or gradient analysis. Our Dynamic Loss Equilibrium framework combines explicit weighting parameters ($\lambda_{\text{score}}$, $\lambda_{\text{rank}}$) with task-specific adaptation through prefix conditioning, creating a more controlled and interpretable adaptation mechanism.
 
-**Pooling Mechanisms.** While mean/max/last-token pooling are computationally efficient, they may not optimally aggregate information. Self-attention pooling [11] can be more expressive but adds complexity. Our Attention Pooling mechanism attempts to balance effectiveness and efficiency through a learnable context vector approach.
+**Pooling Mechanisms.** While mean/max/last-token pooling are computationally efficient, they may not optimally aggregate information. Self-attention pooling [11] can be more expressive but adds complexity. Our learnable Attention Pooling mechanism attempts to balance effectiveness and efficiency through a learnable context vector approach.
 
 **Multi-Task Learning & Dynamic Loss.** Training models on multiple tasks simultaneously can improve generalization [12]. Dynamically selecting or weighting losses may help navigate conflicting gradient signals [13, 14]. Our approach provides an *explicit, discrete* signal for selecting task-optimized loss combinations, potentially ensuring appropriate geometric constraints are applied during optimization for each sample type.
 
@@ -84,7 +84,7 @@ The `viPolyQwen` embedder builds upon the `Qwen/Qwen2-VL-2B-Instruct` model [3].
 
    where $\mathbf{h}_i$ represents the contextualized state for the $i$-th token or visual patch, and $D_{\mathrm{hidden}}$ is the hidden dimension of the base VLM (e.g., 2048 for Qwen2-VL-2B).
 
-2. **Attention Pooling Layer:** This layer (Section 3.2) aggregates the hidden state sequence $\mathbf{H}$ into a single context vector $\mathbf{c} \in \mathbb{R}^{D_{\mathrm{hidden}}}$.
+2. **Attention Pooling Layer:** This layer (Section 3.2) aggregates the hidden state sequence $\mathbf{H}$ into a single learnable context vector $\mathbf{c} \in \mathbb{R}^{D_{\mathrm{hidden}}}$.
 
 3. **Enhanced Multi-Layer Projection Head:** A sophisticated trainable projection head transforms the pooled context vector $\mathbf{c}$ into the target embedding space through a series of transformations:
 
@@ -132,7 +132,7 @@ To derive the context vector $\mathbf{c}$ from the hidden state sequence $\mathb
 
 This mechanism is designed to allow the model to focus on potentially informative parts of the sequence (e.g., keywords, salient visual regions, text-in-image) when constructing the 1D representation.
 
-### 3.3 Enhanced Multi-Layer Projection Head
+### 3.3 Enhanced Multi-Layer Learnable Projection Head
 
 The projection head has been significantly enhanced from a simple linear transformation to a multi-layer architecture that introduces non-linearity and additional normalization. This design choice is motivated by several theoretical and practical considerations:
 
@@ -426,44 +426,11 @@ For each evaluation, we measured:
 
 **Table 1: Image-Text Retrieval Performance (Zero-Shot)**
 
-| Model | MS-COCO (T→I) |  |  | MS-COCO (I→T) |  |  | Flickr30k (T→I) |  |  | Flickr30k (I→T) |  |  |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-|  | R@1 | R@5 | R@10 | R@1 | R@5 | R@10 | R@1 | R@5 | R@10 | R@1 | R@5 | R@10 |
-| CLIP (ViT-L/14) | 37.8 | 65.2 | 75.3 | 58.4 | 82.6 | 89.7 | 65.2 | 86.3 | 91.2 | 84.7 | 97.1 | 98.8 |
-| Qwen2-VL (Mean Pool) | 41.2 | 68.7 | 79.1 | 61.5 | 85.3 | 91.2 | 68.1 | 88.6 | 93.4 | 87.2 | 97.6 | 99.1 |
-| viPolyQwen (Ours) | **46.7** | **74.2** | **83.5** | **67.9** | **89.7** | **94.6** | **73.4** | **91.2** | **95.7** | **90.3** | **98.4** | **99.5** |
+TO BE ANNOUNCED
 
 **Table 2: Performance on Vietnamese Semantic Textual Similarity (ViSTS)**
 
-| Model | Spearman's $\rho$ |
-|---|---|
-| mBERT | 0.703 |
-| XLM-R | 0.746 |
-| ViLT (Vietnamese finetuned) | 0.782 |
-| Qwen2-VL (Mean Pool) | 0.815 |
-| viPolyQwen (Ours) | **0.863** |
-
-**Table 3: Ablation Studies on Internal Validation Set**
-
-| Model Variant | Text-Text Retrieval (R@1) | Image-Text Retrieval (R@1) | OCR Accuracy | VQA Retrieval (R@1) |
-|---|---|---|---|---|
-| viPolyQwen (Full) | **79.2** | **68.5** | **75.8** | **64.7** |
-| w/ Mean Pooling | 77.6 | 66.9 | 74.1 | 62.3 |
-| w/ Last Token Pooling | 76.3 | 65.2 | 73.5 | 61.8 |
-| w/o Enhanced Projection | 75.8 | 64.7 | 73.1 | 61.2 |
-| w/ Single LR | 78.3 | 66.1 | 74.3 | 62.5 |
-| w/o Prefix-Guided Loss | 74.9 | 63.8 | 71.2 | 59.6 |
-| w/o Ranking Loss | 78.1 | 67.9 | 75.2 | 63.8 |
-| w/ Fixed Loss Weights | 77.2 | 66.2 | 74.5 | 62.9 |
-
-**Table 4: Impact of Different Loss Components on Text Similarity Performance**
-
-| Loss Configuration | Spearman's $\rho$ | R@1 | MRR |
-|---|---|---|---|
-| InfoNCE only | 0.781 | 74.6 | 0.832 |
-| InfoNCE + MSE | 0.824 | 76.3 | 0.847 |
-| InfoNCE + Ranking | 0.796 | 77.8 | 0.862 |
-| InfoNCE + MSE + Ranking (DLE) | **0.863** | **79.2** | **0.878** |
+TO BE ANNOUNCED
 
 ### 6.3 Analysis and Discussion
 
