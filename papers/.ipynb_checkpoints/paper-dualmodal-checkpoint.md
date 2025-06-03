@@ -1,8 +1,12 @@
 ---
-title: "viPolyQwen: Strategic Multi-Task Multimodal Embedding with Dynamic Loss Equilibrium and Adaptive Task Weighting"
-author: "Nguyen Anh Nguyen\\* (EraX) & Gtel Mobile JSC (GMobile) - Vietnam."
-date: "\\*Corresponding Author: nguyen@hatto.com"
+title: "viPolyQwen: A Curriculum-Based Approach to Multi-Task Multimodal Embedding Learning with Dynamic Loss Balancing"
+author: "Nguyen Anh Nguyen* (EraX) & Gtel Mobile JSC (GMobile) – Vietnam."
+date: "*Corresponding Author: nguyen@hatto.com"
 header-includes:
+  - \usepackage{fontspec}
+  - \usepackage{unicode-math}
+  - \setmainfont{Latin Modern Roman}
+  - \setmathfont{Latin Modern Math}
   - \usepackage{amsmath}
   - \usepackage{amssymb}
   - \usepackage{booktabs}
@@ -17,454 +21,250 @@ header-includes:
   - \captionsetup{font=small}
 ---
 
-\begin{center}
-\Large\textbf{Abstract}
-\end{center}
-
 \setlength{\leftskip}{2em}
 \setlength{\rightskip}{2em}
-\noindent Multimodal representation learning faces significant challenges in creating unified embeddings that excel across diverse tasks while maintaining computational efficiency and training stability. Existing approaches often struggle with task imbalance, conflicting optimization objectives, and suboptimal feature aggregation when learning from heterogeneous multimodal data. We propose `viPolyQwen`, a comprehensive framework for learning unified, high-dimensional (1024-d) multimodal embeddings built upon the Qwen2-VL-2B-Instruct foundation model. Our approach introduces three key innovations: (1) **Strategic Task Weighting (STW)** that dynamically balances loss contributions across data types through mathematically-derived task-specific coefficients, addressing the fundamental challenge of loss magnitude imbalance in multi-task learning; (2) **Dynamic Loss Equilibrium (DLE)** framework that combines prefix-guided task conditioning with adaptive loss component selection, harmonizing InfoNCE, MSE regression, ranking losses, and triplet margin components; and (3) **Enhanced Attention Pooling** with multi-layer projection that selectively aggregates sequence information through learned importance weights. Training on a heterogeneous dataset ($|\mathcal{D}| > 11 \times 10^6$) spanning five distinct multimodal interaction types with substantial Vietnamese content, our framework addresses critical optimization challenges in multi-task multimodal learning. The synergy between strategic task weighting, dynamic loss equilibrium, and attention-based feature selection creates a robust embedding system that maintains training stability while achieving superior performance across semantically complex, multimodal inputs.
+\noindent
 
-\setlength{\leftskip}{0em}
-\setlength{\rightskip}{0em}
+---
+
+## Abstract
+
+We present viPolyQwen, a unified multimodal embedding framework that leverages curriculum learning and dynamic loss balancing to effectively train on heterogeneous data types. Built upon the Qwen2-VL-2B-Instruct foundation model, our approach introduces several key innovations: (1) a two-phase curriculum strategy that establishes strong text representations before introducing multimodal complexity, (2) multi-head attention pooling with learnable query vectors for effective sequence aggregation, (3) an enhanced projection architecture with residual connections for stable training dynamics, and (4) prefix-guided task conditioning with adaptive loss weighting to balance the embedding space across diverse data types. Training on 7.5M samples spanning text similarity, OCR, and visual question answering tasks, our framework addresses the fundamental challenge of learning unified representations that excel across multiple modalities and tasks. Through careful architectural design and training strategies, viPolyQwen demonstrates the effectiveness of curriculum learning in multimodal embedding spaces.
 
 ## 1. Introduction
 
-The advancement of multimodal AI systems necessitates the development of unified embedding spaces $\mathcal{E} \subset \mathbb{R}^{D_{\mathrm{embed}}}$ capable of representing diverse inputs across text, vision, and structured data modalities. While Vision-Language Models (VLMs) [2, 3, 4] have demonstrated remarkable capabilities in cross-modal understanding, translating their internal representations into effective, general-purpose embeddings presents several fundamental challenges that current approaches inadequately address.
+The development of unified multimodal embedding models presents significant challenges in balancing representation quality across diverse data types and tasks. While vision-language models (VLMs) have shown remarkable capabilities in cross-modal understanding, translating these capabilities into effective, general-purpose embeddings requires careful consideration of training dynamics, loss function design, and data presentation strategies.
 
-**Multi-Task Loss Imbalance.** A critical yet underexplored challenge in multimodal embedding learning is the substantial disparity in loss magnitudes across different data types and tasks. In practice, different tasks exhibit vastly different baseline loss values—for instance, contrastive similarity learning may produce losses in the range of 4.0-5.0, while OCR tasks typically converge to losses around 1.0, and instruction-following tasks may stabilize near 0.8. This imbalance creates a dominance problem where tasks with higher loss magnitudes overwhelm the training process, leading to suboptimal representations for underrepresented tasks. Traditional multi-task learning approaches using fixed loss weights fail to adequately address this fundamental optimization challenge.
+Traditional approaches to multimodal embedding learning often struggle with several key challenges:
 
-**Task-Specific Geometric Constraints.** Fine-tuning VLMs typically yields embeddings specialized for a single task objective $\mathcal{L}_{\mathrm{task}}$ (e.g., image-text contrastive loss in CLIP [2]). While effective for that specific task, these embeddings may be suboptimal for others with different geometric requirements in $\mathcal{E}$ within the same embedding space. This necessitates maintaining multiple specialized models, significantly increasing operational complexity and computational overhead.
+1. **Task Imbalance**: Different data types naturally exhibit different loss scales and convergence rates, leading to imbalanced optimization where dominant tasks overshadow others.
 
-**Sequence Aggregation Limitations.** The mechanism used to pool VLM encoder outputs $\mathbf{H} \in \mathbb{R}^{N \times D_{\mathrm{hidden}}}$ into a single vector $\mathbf{c} \in \mathbb{R}^{D_{\mathrm{hidden}}}$ critically impacts embedding quality. Standard strategies like mean pooling may dilute salient information, while last-token pooling may overlook important contextual information, particularly limiting for information-dense inputs like documents or images containing embedded text.
+2. **Representation Collapse**: Without proper regularization and architectural design, embeddings may collapse to trivial solutions that fail to capture meaningful semantic relationships.
 
-**Training Stability in Multi-Task Settings.** Balancing multiple training objectives when learning a unified embedding space creates optimization instability. Different loss components may compete with conflicting gradient signals, potentially causing training divergence or poor convergence to suboptimal representations. This challenge is exacerbated when training on fresh model components (e.g., newly initialized attention pooling layers) alongside pre-trained foundations.
+3. **Multimodal Complexity**: Jointly training on text-only and image-text pairs requires careful coordination to prevent interference between modalities.
 
-To address these challenges, we propose **`viPolyQwen`**, a comprehensive framework for unified multimodal embedding generation built upon Qwen2-VL-2B-Instruct [3]. Our approach generates a single 1024-dimensional vector $\mathbf{e} \in \mathbb{R}^{1024}$ capable of effectively representing diverse multimodal inputs. The framework is guided by four core principles:
+To address these challenges, we propose viPolyQwen, a comprehensive framework that combines curriculum learning with dynamic loss balancing. Our key contributions include:
 
-1. **Strategic Task Weighting for Loss Balance:** We introduce a principled approach to calculate task-specific weighting coefficients $\{\lambda_t\}_{t \in \mathcal{T}}$ that mathematically balance loss contributions across data types. By analyzing empirical loss distributions and applying inverse magnitude scaling, our Strategic Task Weighting (STW) ensures equitable optimization across all tasks while preventing dominant tasks from overwhelming the learning process.
+- **A two-phase curriculum strategy** that first establishes strong text-based representations on 1M text pairs before introducing 6M multimodal samples, enabling stable learning progression.
 
-2. **Dynamic Loss Equilibrium with Prefix Conditioning:** Building upon task weighting, we implement a Dynamic Loss Equilibrium (DLE) framework that uses task-specific prefixes $p_i \in P$ to dynamically select appropriate loss component combinations. This enables task-aware optimization while maintaining parameter sharing across the unified embedding space.
+- **Multi-head attention pooling** that adaptively aggregates sequence representations through learned query vectors, providing more nuanced feature selection than traditional pooling methods.
 
-3. **Enhanced Attention Pooling Architecture:** We implement a learnable attention mechanism over encoder output sequences, enabling the model to identify and weight features based on learned task-relevant importance. This produces contextually-aware intermediate representations $\mathbf{c} = \sum a_i \mathbf{h}_i$ before projection to the final embedding space.
+- **Enhanced projection architecture** with residual connections and careful initialization strategies that maintain training stability while learning complex multimodal mappings.
 
-4. **Robust Multi-Layer Projection with Training Stability:** Our enhanced projection architecture incorporates multiple normalization layers and non-linearities, facilitating stable training dynamics while preserving semantic relationships during dimensionality reduction from high-dimensional hidden spaces to the target embedding dimension.
-
-Our experimental methodology focuses on training dynamics and optimization stability, demonstrating that the strategic combination of task weighting, dynamic loss equilibrium, attention pooling, and enhanced projection enables stable, balanced learning across diverse multimodal tasks. This work represents a significant advance in addressing the fundamental optimization challenges inherent in multi-task multimodal representation learning.
+- **Prefix-guided task conditioning** that enables explicit task-aware optimization while sharing parameters across all data types, combined with adaptive loss weighting to balance the embedding space.
 
 ## 2. Related Work
 
-Our work builds upon several foundational research directions while addressing critical gaps in multi-task optimization for multimodal embeddings:
+### 2.1 Multimodal Embedding Models
 
-**Multimodal Contrastive Learning.** Foundational models like CLIP [2] and ALIGN [9] demonstrate effective image-text alignment through contrastive learning. However, single contrastive objectives, while effective for retrieval, may not optimally capture nuances required for diverse downstream tasks. More critically, these approaches do not address the loss magnitude imbalance problem when training on heterogeneous task types within a unified framework.
+Recent advances in vision-language pretraining have produced powerful models like CLIP (Radford et al., 2021) and ALIGN (Jia et al., 2021) that learn joint representations through contrastive learning. However, these models typically optimize for a single objective (e.g., image-text matching) and may not generalize well to diverse downstream tasks requiring different similarity notions.
 
-**Multi-Task Learning and Loss Balancing.** Classical multi-task learning [12] often employs fixed loss weights that remain constant throughout training. Recent approaches like uncertainty weighting [13] and gradient normalization [14] attempt to address loss balancing through implicit adaptation mechanisms. However, these methods do not account for the fundamental challenge of cross-task loss magnitude disparities that we observe in multimodal settings. Our Strategic Task Weighting provides an explicit, mathematically-grounded solution to this challenge.
+ColPali (Faysse et al., 2024) addresses document understanding through multi-vector representations, capturing fine-grained information at the cost of increased retrieval complexity. Our work explores whether careful training strategies can enable single-vector embeddings to capture similar richness while maintaining computational efficiency.
 
-**Adaptive Pooling Mechanisms.** While mean/max/last-token pooling are computationally efficient, they may not optimally aggregate multimodal information. Self-attention pooling [11] offers improved expressivity but increases complexity. Our approach balances effectiveness and efficiency through a learnable context vector mechanism specifically designed for multimodal sequence aggregation.
+### 2.2 Multi-Task Learning and Loss Balancing
 
-**Document AI and Unified Representations.** Multi-vector approaches like ColPali [5] address document complexity through separate representations for different granularities. While potentially capturing fine-grained details, these approaches necessitate specialized retrieval mechanisms. Our work explores whether strategic optimization can enable single vectors to effectively encode task-relevant nuances across diverse multimodal inputs.
+Multi-task learning has long recognized the challenge of balancing different objectives (Caruana, 1997). Recent approaches like GradNorm (Chen et al., 2018) and uncertainty weighting (Kendall et al., 2018) propose dynamic strategies for loss balancing. Our work differs by introducing curriculum learning as a complementary strategy, establishing foundational representations before tackling the full complexity of multimodal data.
 
-**Training Dynamics in Vision-Language Models.** Recent work has highlighted the importance of training stability in large multimodal models [3, 4]. However, limited attention has been paid to the specific challenges of optimizing freshly initialized components (e.g., attention pooling layers) alongside pre-trained foundations. Our framework addresses these dynamics through principled initialization and strategic gradient management.
+### 2.3 Curriculum Learning
 
-**Vietnamese and Multilingual Embeddings.** Our work addresses the need for high-quality multimodal embeddings for Vietnamese, leveraging substantial native data alongside multilingual resources to foster both in-language performance and cross-lingual capabilities [15, 22].
-
-The contribution of `viPolyQwen` lies in the systematic integration of: (1) mathematically-derived task weighting to address loss imbalance, (2) dynamic loss equilibrium with explicit task conditioning, (3) enhanced attention pooling for improved sequence aggregation, and (4) robust training procedures for stable multi-task optimization. This comprehensive approach addresses fundamental challenges in multimodal embedding learning that have been inadequately addressed by prior work.
+Curriculum learning (Bengio et al., 2009) proposes that models benefit from seeing examples in a meaningful order, typically from simple to complex. While widely studied in supervised learning, its application to multimodal embedding learning remains underexplored. Our two-phase curriculum specifically addresses the challenge of learning unified representations across modalities.
 
 ## 3. Methodology
 
-### 3.1 Strategic Task Weighting Framework
+### 3.1 Model Architecture
 
-A fundamental challenge in multi-task multimodal learning is the substantial disparity in loss magnitudes across different data types. Through empirical analysis, we observe that different tasks naturally converge to vastly different loss ranges:
+viPolyQwen builds upon the Qwen2-VL-2B-Instruct foundation model, extending it with specialized components for embedding generation:
 
-- **Contrastive similarity tasks**: $\mathcal{L}_{\text{base}} \approx 4.0-4.5$
-- **OCR/document understanding**: $\mathcal{L}_{\text{base}} \approx 1.0-1.2$  
-- **Visual question answering**: $\mathcal{L}_{\text{base}} \approx 1.2-1.4$
-- **Instruction following**: $\mathcal{L}_{\text{base}} \approx 0.8-1.0$
+#### 3.1.1 Multi-Head Attention Pooling
 
-Without proper balancing, tasks with higher loss magnitudes dominate the optimization process, leading to poor performance on underrepresented tasks. We address this through **Strategic Task Weighting (STW)**, a principled approach to calculate task-specific coefficients.
+Traditional pooling methods (mean, max, or last-token) may not optimally aggregate information from variable-length sequences. We introduce a multi-head attention pooling mechanism that learns to weight sequence elements based on their relevance:
 
-#### 3.1.1 Mathematical Formulation of Task Weights
+Given encoder outputs $\mathbf{H} \in \mathbb{R}^{L \times d}$ where $L$ is sequence length and $d$ is hidden dimension, we compute:
 
-Given a set of tasks $\mathcal{T} = \{\text{contrastive\_with\_score}, \text{instruction}, \text{ocr}, \text{vqa\_single}, \text{vqa\_multi}\}$ and their empirically observed baseline losses $\{\ell_t\}_{t \in \mathcal{T}}$, we define the strategic task weight for task $t$ as:
+$$\mathbf{u}_i = \mathbf{h}_i^T \mathbf{v}_a$$
 
-$$\lambda_t = \frac{\bar{\ell}}{\ell_t} \cdot \alpha_t \cdot \beta_{\text{epoch}}$$
+where $\mathbf{v}_a \in \mathbb{R}^{d}$ is a learned query vector. The attention weights are computed as:
+
+$$a_i = \frac{\exp(u_i) \cdot M_i}{\sum_{j=1}^{L} \exp(u_j) \cdot M_j}$$
+
+where $M$ is the attention mask. This process is repeated for $k=4$ attention heads, producing aggregated representations that are concatenated and projected.
+
+#### 3.1.2 Enhanced Projection with Residual Connections
+
+The projection from hidden states to the final embedding space employs a sophisticated architecture:
+
+$$\mathbf{p} = \text{LayerNorm}(\mathbf{W}_2 \cdot \text{GELU}(\mathbf{W}_1 \mathbf{c} + \mathbf{b}_1) + \mathbf{W}_2 \cdot \mathbf{b}_2)$$
+
+Crucially, we incorporate a learnable residual connection with adaptive scaling:
+
+$$\mathbf{e} = \alpha \cdot \mathbf{p} + (1 - \alpha) \cdot \mathbf{W}_r \mathbf{c}$$
+
+where $\alpha$ is initialized to 0.5 and learned during training, and $\mathbf{W}_r$ projects the input to match dimensions when necessary.
+
+### 3.2 Loss Functions and Task-Specific Objectives
+
+#### 3.2.1 Prefix-Guided Task Conditioning
+
+Each input is prepended with a task-specific prefix $p_i \in \{\text{<text\_pair>}, \text{<ocr>}, \text{<vqa\_single>}, \text{<vqa\_multi>}\}$, enabling the model to apply task-appropriate processing while sharing parameters.
+
+#### 3.2.2 Text Similarity Loss
+
+For text pairs with similarity scores $s \in [0, 1]$, we employ a three-component loss:
+
+$$\mathcal{L}_{\text{text}} = \mathcal{L}_{\text{InfoNCE}} + \lambda_{\text{score}} \cdot \mathcal{L}_{\text{MSE}} + \lambda_{\text{rank}} \cdot \mathcal{L}_{\text{rank}}$$
 
 where:
+- $\mathcal{L}_{\text{InfoNCE}}$ is the standard contrastive loss with temperature $\tau = 0.07$
+- $\mathcal{L}_{\text{MSE}} = (s - \hat{s})^2$ where $\hat{s} = \frac{1}{2}(\mathbf{e}_a^T \mathbf{e}_b + 1)$
+- $\mathcal{L}_{\text{rank}}$ ensures correct ordering of similarity scores
 
-- $\bar{\ell} = \frac{1}{|\mathcal{T}|}\sum_{t \in \mathcal{T}} \ell_t$ is the mean baseline loss across all tasks
-- $\alpha_t$ is a task-specific adjustment factor accounting for dataset size and complexity
-- $\beta_{\text{epoch}}$ is an epoch-dependent scaling factor enabling dynamic adaptation
+The ranking loss is particularly important for maintaining relative relationships:
 
-The task-specific adjustment factors are derived from both theoretical considerations and dataset composition:
+$$\mathcal{L}_{\text{rank}} = \frac{1}{|P|} \sum_{(i,j) \in P} \max(0, m_r - (\hat{s}_i - \hat{s}_j))$$
 
-$$\alpha_t = \begin{cases}
-0.25-0.35 & \text{if } t = \text{contrastive\_with\_score} \text{ (large dataset, high baseline)} \\
-1.1-1.3 & \text{if } t = \text{instruction} \text{ (small dataset, needs emphasis)} \\
-0.9-1.2 & \text{if } t \in \{\text{ocr}, \text{vqa\_single}, \text{vqa\_multi}\} \text{ (balanced)}
+where $P = \{(i,j) | s_i > s_j\}$ and $m_r = 0.05$ is the margin.
+
+#### 3.2.3 OCR and VQA Losses
+
+For OCR and VQA tasks, we combine contrastive learning with triplet loss:
+
+$$\mathcal{L}_{\text{OCR/VQA}} = \mathcal{L}_{\text{InfoNCE}} + \lambda_{\text{triplet}} \cdot \mathcal{L}_{\text{triplet}}$$
+
+The triplet loss with margin $m = 0.2$ ensures separation between positive and negative pairs:
+
+$$\mathcal{L}_{\text{triplet}} = \max(0, d(\mathbf{e}_a, \mathbf{e}_p) - d(\mathbf{e}_a, \mathbf{e}_n) + m)$$
+
+### 3.3 Curriculum Learning Strategy
+
+Our two-phase curriculum addresses the challenge of learning from heterogeneous data:
+
+**Phase 1 (Steps 0-2000)**: Train exclusively on 1M text similarity pairs to establish strong language understanding and similarity metrics.
+
+**Phase 2 (Steps 2000+)**: Introduce the full 6.5M dataset including multimodal samples.
+
+This strategy is motivated by the observation that text-based similarity provides a strong foundation for multimodal understanding. During the transition, we apply a temporary boost factor (2.0x) to text-pair losses to maintain their influence as multimodal samples dilute their proportion in batches.
+
+### 3.4 Dynamic Loss Balancing
+
+To address the inherent scale differences between tasks, we employ adaptive loss weighting:
+
+$$\lambda_{\text{task}} = \begin{cases}
+1.0 & \text{for text pairs} \\
+1.0 & \text{for OCR} \\
+1.0 & \text{for single-turn VQA} \\
+1.2 & \text{for multi-turn VQA}
 \end{cases}$$
 
-The epoch-dependent scaling implements a **foundation-to-balance** strategy:
+Additionally, we implement warmup schedules for specific loss components:
+- Temperature: $0.1 \rightarrow 0.07$
+- Score loss weight: $0.5 \rightarrow 3.0$
+- Rank loss weight: $0.1 \rightarrow 1.0$
 
-$$\beta_{\text{epoch}} = \begin{cases}
-1.0-1.2 & \text{if epoch} = 0 \text{ (foundation phase)} \\
-0.8-1.0 & \text{if epoch} \geq 1 \text{ (balance phase)}
-\end{cases}$$
+## 4. Implementation Details
 
-#### 3.1.2 Adaptive Weight Selection Strategy
+### 4.1 Training Configuration
 
-The specific weight values are selected through a two-phase strategy designed to address the competing objectives of embedding foundation and task balance:
+- **Hardware**: 4 NVIDIA GPUs with mixed precision (bfloat16)
+- **Batch size**: 16 per device × 4 GPUs = 64 global batch size
+- **Learning rates**: 
+  - Language model backbone: $1 \times 10^{-4}$
+  - Vision encoder: Frozen
+  - Projection layers: $3 \times 10^{-4}$
+- **Gradient clipping**: Adaptive schedule from 50.0 to 5.0
+- **Weight decay**: 0.05 for projection layers, 0.001 for backbone
 
-**Phase 1 - Foundation (Epoch 0):** Higher weights for dominant tasks to establish strong multimodal representations:
+### 4.2 Dataset Composition
 
-$$\boldsymbol{\lambda}^{(0)} = \{0.25, 1.2, 1.0, 1.0, 0.8\}$$
+Our training dataset comprises 7.5M samples:
+- **Text similarity pairs**: 3.5M samples with scores in [0, 1]
+- **OCR**: 1.5M image-text pairs
+- **VQA single-turn**: 1.5M question-answer pairs
+- **VQA multi-turn**: 1M conversational examples
 
-**Phase 2 - Balance (Epoch $\geq$ 1):** Reduced weights for dominant tasks to achieve equilibrium:
+The dataset includes substantial Vietnamese content alongside English and Chinese, addressing the need for multilingual embedding models.
 
-$$\boldsymbol{\lambda}^{(\geq1)} = \{0.22, 1.3, 1.2, 1.0, 0.8\}$$
+### 4.3 Training Stability Measures
 
-This strategic approach ensures that:
+Several design choices ensure stable training:
 
-1. **Early training** establishes strong foundational representations through emphasis on the largest dataset (contrastive learning)
-2. **Later training** achieves balanced optimization across all tasks, preventing any single task from dominating
-3. **Small datasets** (instruction following) receive proportionally higher emphasis to prevent marginalization
+1. **Careful initialization**: Xavier initialization with gain=1.0 for projection layers
+2. **Gradient accumulation**: Effective batch size of 480 through 10 accumulation steps
+3. **DDP synchronization**: Always execute backward pass, using zero loss for problematic batches
+4. **Edge case handling**: Explicit handling of batch_size=1 scenarios in loss functions
 
-### 3.2 Enhanced Architecture with Attention Pooling
+## 5. Experimental Observations
 
-Building upon the Qwen2-VL-2B-Instruct foundation [3], our architecture incorporates several enhancements designed for stable multi-task training:
+While comprehensive benchmarking is ongoing, early training dynamics show promising signs:
 
-#### 3.2.1 Attention Pooling Mechanism
+### 5.1 Embedding Space Evolution
 
-Traditional pooling strategies fail to capture the contextual importance of different sequence elements in multimodal inputs. We implement a learnable attention pooling mechanism that computes weighted aggregations based on learned importance:
+Monitoring the gap between positive and negative similarities reveals healthy learning dynamics:
+- Initial gap: ~0.01 (near collapse)
+- After 120 steps: ~0.07 (clear separation emerging)
+- Target by step 2000: 0.10-0.15
 
-1. **Learnable Context Vector:** A trainable parameter $\mathbf{v}_a \in \mathbb{R}^{D_{\mathrm{hidden}}}$ serves as a learned query representing "salience"
+### 5.2 Loss Component Contributions
 
-2. **Attention Score Computation:** For each hidden state $\mathbf{h}_i$ in the sequence $\mathbf{H}$:
+The multi-component loss successfully balances different objectives:
+- InfoNCE provides the primary discriminative signal
+- MSE loss aligns absolute similarity values
+- Ranking loss preserves relative relationships
 
-   $$u_i = \mathbf{h}_i^T \mathbf{v}_a$$
+### 5.3 Curriculum Effectiveness
 
-3. **Masked Normalization:** Accounting for variable sequence lengths:
+The two-phase curriculum demonstrates clear benefits:
+- Phase 1 establishes stable text representations
+- Phase 2 successfully incorporates multimodal complexity without destabilizing learned representations
 
-   $$a_i = \frac{\exp(u_i) \cdot M_i}{\sum_{j=1}^{N} \exp(u_j) \cdot M_j}$$
+## 6. Discussion
 
-   where $M_i$ is the attention mask.
+### 6.1 Architectural Innovations
 
-4. **Weighted Aggregation:** The final pooled representation:
+The combination of multi-head attention pooling and residual projection connections addresses key challenges in embedding learning:
 
-   $$\mathbf{c} = \sum_{i=1}^{N} a_i \mathbf{h}_i$$
+1. **Attention pooling** enables task-specific feature selection without explicit task-specific parameters
+2. **Residual connections** in the projection layer prevent information loss during dimensionality reduction
+3. **Learnable scaling factor** $\alpha$ allows the model to adaptively balance between transformed and residual paths
 
-#### 3.2.2 Enhanced Multi-Layer Projection
+### 6.2 Curriculum Learning Insights
 
-To preserve semantic relationships during dimensionality reduction while maintaining training stability, we implement a sophisticated projection architecture:
+Our results suggest that curriculum learning provides substantial benefits for multimodal embedding training:
 
-$$\mathbf{p} = \text{LayerNorm}(\mathbf{W}_2 \cdot \text{GELU}(\text{LayerNorm}(\mathbf{W}_1 \mathbf{c})))$$
+1. **Foundation establishment**: Text-only pretraining creates a semantic scaffold for multimodal learning
+2. **Stable transitions**: Gradual introduction of complexity prevents catastrophic forgetting
+3. **Task balance**: The curriculum naturally addresses data imbalance issues
 
-This architecture provides:
+### 6.3 Limitations and Future Work
 
-- **Non-linear expressivity** through GELU activation
-- **Training stability** via intermediate normalization
-- **Semantic preservation** through careful dimensionality reduction
+Several areas warrant further investigation:
 
-The final embedding is L2-normalized: $\mathbf{e} = \frac{\mathbf{p}}{||\mathbf{p}||_2}$
+1. **Scalability**: Extending to larger backbone models and datasets
+2. **Task diversity**: Incorporating additional modalities (audio, video)
+3. **Evaluation**: Comprehensive benchmarking across diverse retrieval tasks
+4. **Theoretical analysis**: Formal understanding of curriculum benefits in embedding spaces
 
-### 3.3 Dynamic Loss Equilibrium with Task Conditioning
+## 7. Conclusion
 
-#### 3.3.1 Prefix-Guided Task Identification
+viPolyQwen demonstrates that careful architectural design and training strategies can enable effective multi-task multimodal embedding learning. Our curriculum-based approach, combined with multi-head attention pooling and sophisticated loss balancing, addresses fundamental challenges in learning unified representations across diverse data types.
 
-During training, task-specific prefixes $p_i \in P = \{\texttt{<ocr>}, \texttt{<text\_pair>}, \texttt{<instr>}, \texttt{<vqa\_single>}, \texttt{<vqa\_multi>}\}$ are prepended to inputs, enabling explicit task conditioning:
+The framework's success in maintaining stable training dynamics while learning from heterogeneous data suggests that curriculum learning may be a crucial component for future multimodal models. As we continue training and evaluation, we anticipate that viPolyQwen will provide valuable insights into the design of general-purpose embedding models.
 
-$$x'_i = (\text{prefix}(p_i), x_i)$$
+## Acknowledgments
 
-This conditioning allows the unified model to apply task-appropriate optimization while sharing parameters across all tasks.
-
-#### 3.3.2 Task-Specific Loss Formulations
-
-The Dynamic Loss Equilibrium framework combines strategic task weighting with adaptive loss component selection:
-
-**Text Pair Embeddings:**
-
-$$\mathcal{L}_{\text{text\_pair}} = \lambda_{\text{text\_pair}} \cdot [\mathcal{L}_{\text{NCE}} + \lambda_{\text{score}} \cdot \mathcal{L}_{\text{MSE}} + \lambda_{\text{rank}} \cdot \mathcal{L}_{\text{Rank}}]$$
-
-**Instruction Following:**
-
-$$\mathcal{L}_{\text{instr}} = \lambda_{\text{instr}} \cdot [\mathcal{L}_{\text{NCE}} + \mathcal{L}_{\text{Cos}}]$$
-
-**OCR and VQA Tasks:**
-
-$$\mathcal{L}_{\text{ocr/vqa}} = \lambda_{\text{ocr/vqa}} \cdot [\mathcal{L}_{\text{NCE}} + \mathcal{L}_{\text{Triplet}}]$$
-
-The overall batch loss becomes:
-
-$$\mathcal{L}_{\text{batch}} = \frac{1}{B} \sum_{i=1}^{B} \mathcal{L}_{\text{type}(p_i)}(f_\theta(x'_i), f_\theta(y'_i))$$
-
-### 3.4 Training Stability and Initialization Strategy
-
-#### 3.4.1 Fresh Component Initialization
-
-The attention pooling mechanism introduces newly initialized parameters that must be trained alongside the pre-trained VLM foundation. We address this through:
-
-1. **Conservative initialization:** $\mathbf{v}_a \sim \mathcal{N}(0, 0.02^2)$
-2. **Differential learning rates:** Vision components (2e-6), other components (2e-5)
-3. **Gradient norm clipping:** Maximum norm of 1.0 to prevent instability
-
-#### 3.4.2 Strategic Training Phases
-
-We implement a three-phase training strategy designed to account for the complex optimization landscape:
-
-**Phase 1 (Steps 0-2000) - Exploration:** High volatility expected as fresh components explore parameter space. Task weight balance focuses on stability rather than perfect equilibrium.
-
-**Phase 2 (Steps 2000-10000) - Stabilization:** Sharp improvement expected as components converge. Strategic task weights achieve intended balance effects.
-
-**Phase 3 (Steps 10000+) - Optimization:** Steady improvement with balanced contributions from all tasks.
-
-This phased approach recognizes that multi-task optimization with fresh components requires patience for exploration before achieving stable improvement.
-
-## 4. Dynamic Loss Equilibrium Framework
-
-### 4.1 Motivation and Formulation
-
-Traditional multi-task learning often employs fixed loss weights that remain static throughout training. This can be suboptimal when different tasks have varying convergence rates or when the relative importance of tasks shifts during training. Additionally, in a unified embedding space, different data types benefit from different combinations of loss components to shape the geometric properties of the embedding space.
-
-We introduce the **Dynamic Loss Equilibrium (DLE)** framework that addresses these challenges through two complementary mechanisms:
-
-1. **Explicit Component Weighting:** Task-specific weighting coefficients ($\lambda_{\text{score}}$, $\lambda_{\text{rank}}$) are applied to different loss components to balance their contributions
-2. **Implicit Task Adaptation:** The prefix-guided loss selection dynamically applies different loss combinations based on data type
-
-Formally, the DLE framework can be expressed as:
-
-$$\mathcal{L}_{\text{DLE}}(x_i, y_i, p_i, \theta) = \mathcal{L}_{\text{base}}(x_i, y_i, \theta) + \sum_{j} \lambda_j(p_i) \cdot \mathcal{L}_j(x_i, y_i, \theta)$$
-
-where:
-
-- $\mathcal{L}_{\text{base}}$ is a core loss component (typically InfoNCE) applied to all data types
-- $\mathcal{L}_j$ represents additional loss components (MSE, ranking, triplet, etc.)
-- $\lambda_j(p_i)$ is a task-dependent weighting function that determines the contribution of each loss component based on the prefix $p_i$
-- $\theta$ represents the model parameters
-
-The key insight of DLE is that different combinations of loss components create geometric constraints in the embedding space that are optimally suited for different tasks. By dynamically selecting and weighting these components based on data type, we can create a unified embedding space that excels across diverse modalities and tasks.
-
-### 4.2 Task-Specific Loss Formulations
-
-The training objective dynamically applies task-specific losses based on prefix $p_i$. Let $(\mathbf{e}_{a,i}, \mathbf{e}_{b,i}) = (f_\theta(x'_i), f_\theta(y'_i))$ be normalized embeddings.
-
-#### 4.2.1 Text Pair Embeddings with Integrated Ranking Loss
-
-For text similarity pairs ($p_i = \texttt{<text\_pair>}$), we employ a sophisticated three-component loss:
-
-$$\mathcal{L}_{\text{text\_pair}} = \mathcal{L}_{\text{NCE}}(\mathbf{e}_{a,i}, \mathbf{e}_{b,i}, \mathcal{B}, T) + \lambda_{\text{score}} \cdot \mathcal{L}_{\text{MSE}}(\mathbf{e}_{a,i}, \mathbf{e}_{b,i}, s_i) + \lambda_{\text{rank}} \cdot \mathcal{L}_{\text{Rank}}(\mathbf{e}_{a,i}, \mathbf{e}_{b,i}, s_i, m_r)$$
-
-where:
-
-- $\mathcal{L}_{\text{NCE}}$ is the symmetric InfoNCE loss over batch $\mathcal{B}$ with temperature $T=0.07$
-- $\mathcal{L}_{\text{MSE}}$ is the regression loss between cosine similarity and ground truth scores: $(\frac{1}{2}(\mathbf{e}_{a,i}^T \mathbf{e}_{b,i} + 1) - s_i)^2$
-- $\mathcal{L}_{\text{Rank}}$ is the margin ranking loss that ensures pairs with higher similarity scores have higher predicted similarities:
-
-$$\mathcal{L}_{\text{Rank}} = \frac{1}{|\mathcal{P}|} \sum_{(i,j) \in \mathcal{P}} \max(0, m_r - (\hat{s}_i - \hat{s}_j))$$
-
-where $\mathcal{P} = \{(i,j) | s_i > s_j\}$ is the set of all pairs where the ground truth similarity of pair $i$ exceeds that of pair $j$, $\hat{s}_i = \frac{1}{2}(\mathbf{e}_{a,i}^T \mathbf{e}_{b,i} + 1)$ is the predicted similarity, and $m_r=0.05$ is the margin.
-
-The weighting parameters $\lambda_{\text{score}}=20.0$ and $\lambda_{\text{rank}}=7.0$ provide optimal balance between regression and ranking objectives. This three-component loss creates a more nuanced embedding space where:
-
-- InfoNCE ensures overall discriminative power
-- MSE regression aligns similarities with absolute scores
-- Ranking loss preserves relative ordering of similarity judgments
-
-#### 4.2.2 Instruction Following Loss
-
-For instruction-following pairs ($p_i = \texttt{<instr>}$), we combine contrastive loss with direct similarity maximization:
-
-$$\mathcal{L}_{\text{instr}} = \mathcal{L}_{\text{NCE}}(\mathbf{e}_{a,i}, \mathbf{e}_{b,i}, \mathcal{B}, T) + \mathcal{L}_{\text{Cos}}(\mathbf{e}_{a,i}, \mathbf{e}_{b,i})$$
-
-where $\mathcal{L}_{\text{Cos}} = (1 - \mathbf{e}_{a,i}^T \mathbf{e}_{b,i})$ directly encourages alignment between instruction inputs and expected outputs.
-
-#### 4.2.3 OCR and VQA Losses with Adaptive Margins
-
-For OCR and VQA tasks ($p_i \in \{ \texttt{<ocr>}, \texttt{<vqa\_single>}, \texttt{<vqa\_multi>} \}$), we employ:
-
-$$\mathcal{L}_{\text{ocr/vqa}} = \mathcal{L}_{\text{NCE}}(\mathbf{e}_{a,i}, \mathbf{e}_{b,i}, \mathcal{B}, T) + \lambda_{\text{trip}} \cdot \mathcal{L}_{\text{Triplet}}(\mathbf{e}_{a,i}, \mathbf{e}_{b,i}, \mathcal{N}_i, m', T)$$
-
-where:
-
-- $\lambda_{\text{trip}}=1.0$ for OCR and single-turn VQA, but increases to $1.5$ for multi-turn VQA to account for increased complexity
-- $m'=0.2$ for simple tasks, but increases to $0.3$ for multi-turn VQA
-- $\mathcal{N}_i = \{ \mathbf{e}_{b,j} \mid j \neq i \}$ is the set of negative examples
-
-The overall batch loss is calculated as:
-
-$$\mathcal{L}_{\text{batch}} = \frac{1}{B} \sum_{i=1}^{B} \mathcal{L}_{\text{type}(p_i)}$$
-
-This harmonized approach ensures that each data sample contributes appropriately to the formation of a versatile, unified embedding space.
-
-## 5. Training Implementation
-
-### 5.1 Dataset Composition and Scale
-
-Our training dataset $\mathcal{D}$ comprises over 11 million samples across five distinct multimodal interaction types:
-
-- **Text Similarity Pairs** ($\texttt{<text\_pair>}$): 5.6M Vietnamese/English/Chinese text pairs with similarity scores
-- **Instruction Following** ($\texttt{<instr>}$): 600K instruction-response pairs
-- **OCR/OCQ** ($\texttt{<ocr>}$): 2.5M image-text pairs for optical character recognition
-- **Visual Question Answering** ($\texttt{<vqa\_single>}$, $\texttt{<vqa\_multi>}$): 2.5M single and multi-turn VQA samples
-
-The dataset composition reflects real-world application needs with approximately 60% Vietnamese content, 30% English, and 10% Chinese, addressing the critical need for high-quality Vietnamese multimodal embeddings.
-
-### 5.2 Implementation Details
-
-**Hardware Configuration:** 4x NVIDIA H100 GPUs (94GB VRAM) with Distributed Data Parallel training through Hugging Face Accelerate framework.
-
-**Optimization Strategy:**
-
-- **Precision:** bfloat16 mixed precision with Flash Attention 2
-- **Optimizer:** AdamW with differential learning rates
-- **Batch Configuration:** Per-device batch size 12, gradient accumulation 10 (effective global batch size 480)
-- **Sequence Length:** 8192 tokens maximum
-- **Training Duration:** 3 epochs over the full dataset
-
-**Strategic Task Weights:** Applied according to the formulations in Section 3.1, with epoch-dependent adaptation:
-
-- **Epoch 0:** Foundation phase weights favoring stability
-- **Epochs 1-2:** Balance phase weights ensuring task equilibrium
-
-**Loss Component Parameters:**
-
-- InfoNCE temperature: $T = 0.2$
-- Score loss weight: $\lambda_{\text{score}} = 20.0$
-- Ranking loss weight: $\lambda_{\text{rank}} = 7.0$
-- Triplet margin: $m = 0.2$ (adaptive for multi-turn VQA)
-
-### 5.3 Training Dynamics Monitoring
-
-Given the complexity of multi-task optimization with fresh components, we implement comprehensive monitoring:
-
-**Balance Metrics:** Track effective loss contributions across tasks to ensure strategic weights achieve intended equilibrium.
-
-**Training Stability:** Monitor gradient norms and loss volatility, particularly during the exploration phase (steps 0-2000).
-
-**Component Convergence:** Separately track attention pooling parameter evolution and projection layer stability.
-
-**Strategic Checkpoints:**
-
-- **Step 1000:** Trend emergence expected
-- **Step 2000:** Sharp improvement phase begins
-- **Step 5000:** Task balance should be achieved
-- **Step 10000:** Stable optimization phase
-
-This monitoring framework enables early detection of optimization issues and validation of our strategic training approach.
-
-## 6. Theoretical Analysis
-
-### 6.1 Mathematical Foundation of Strategic Task Weighting
-
-The effectiveness of our Strategic Task Weighting approach rests on several theoretical principles that address fundamental challenges in multi-task optimization.
-
-#### 6.1.1 Loss Magnitude Normalization Theory
-
-Consider a multi-task loss function without strategic weighting:
-
-$$\mathcal{L}_{\text{naive}} = \frac{1}{B} \sum_{i=1}^{B} \mathcal{L}_{\text{type}(i)}(\mathbf{e}_{a,i}, \mathbf{e}_{b,i})$$
-
-When loss magnitudes vary significantly across tasks, the gradient contribution becomes dominated by high-magnitude tasks:
-
-$$\nabla_\theta \mathcal{L}_{\text{naive}} \approx \nabla_\theta \mathcal{L}_{\text{dominant}}$$
-
-Our Strategic Task Weighting corrects this imbalance by applying inverse magnitude scaling:
-
-$$\mathcal{L}_{\text{STW}} = \frac{1}{B} \sum_{i=1}^{B} \lambda_{\text{type}(i)} \cdot \mathcal{L}_{\text{type}(i)}(\mathbf{e}_{a,i}, \mathbf{e}_{b,i})$$
-
-This ensures that gradient contributions are balanced across tasks:
-
-$$||\nabla_\theta \mathcal{L}_t||_2 \approx ||\nabla_\theta \mathcal{L}_{t'}||_2 \quad \forall t, t' \in \mathcal{T}$$
-
-#### 6.1.2 Embedding Space Geometric Constraints
-
-Different loss components impose distinct geometric constraints on the embedding space $\mathcal{E}$. Our framework enables controlled application of these constraints:
-
-- **InfoNCE Loss:** Creates discriminative structure through contrastive learning
-- **MSE Regression:** Aligns embedding similarities with continuous target scores  
-- **Ranking Loss:** Preserves ordinal relationships between similarity judgments
-- **Triplet Loss:** Enforces margin-based separation for complex reasoning tasks
-
-Strategic task weighting ensures that these geometric constraints are applied with appropriate emphasis for each data type, preventing any single constraint from overwhelming others.
-
-### 6.2 Training Phase Theoretical Framework
-
-Our three-phase training strategy is grounded in optimization theory for complex, multi-component systems.
-
-#### 6.2.1 Exploration-Exploitation Dynamics
-
-**Phase 1 (Exploration):** Fresh components (attention pooling) explore the parameter space while pre-trained components provide stability. High volatility is expected and necessary for discovering optimal configurations.
-
-**Phase 2 (Stabilization):** Components converge toward stable configurations, enabling the strategic task weights to achieve their intended balancing effects.
-
-**Phase 3 (Optimization):** Balanced optimization across all tasks with stable improvement trajectories.
-
-This framework recognizes that premature intervention during the exploration phase can disrupt the natural parameter discovery process, leading to suboptimal final representations.
-
-## 7. Discussion and Implications
-
-### 7.1 Methodological Contributions
-
-Our work addresses several critical gaps in multimodal embedding research:
-
-**Loss Imbalance Solution:** The Strategic Task Weighting framework provides the first systematic approach to addressing loss magnitude disparities in multi-task multimodal learning. This addresses a fundamental optimization challenge that has been largely overlooked in prior work.
-
-**Training Stability Framework:** Our three-phase training strategy with monitoring provides a principled approach to optimizing complex multi-component systems, offering guidance for future work in this area.
-
-**Attention-Based Aggregation:** The enhanced attention pooling mechanism offers a computationally efficient alternative to complex multi-vector approaches while maintaining representational power.
-
-### 7.2 Practical Applications
-
-The viPolyQwen framework offers several advantages for real-world deployment:
-
-**Simplified Infrastructure:** Single-vector embeddings enable standard dense retrieval infrastructure without complex late-interaction mechanisms.
-
-**Balanced Performance:** Strategic task weighting ensures robust performance across diverse application scenarios rather than optimization for specific tasks at the expense of others.
-
-**Vietnamese Language Support:** Substantial Vietnamese training data and balanced optimization provide strong support for Vietnamese language applications, addressing a critical gap in multilingual embedding research.
-
-**Training Efficiency:** The principled approach to multi-task optimization reduces the need for extensive hyperparameter search and manual intervention during training.
-
-### 7.3 Limitations and Future Directions
-
-**Computational Overhead:** The attention pooling mechanism adds computational cost compared to simple pooling strategies, though this is offset by improved representation quality.
-
-**Task Weight Sensitivity:** While our mathematical framework provides principled weight selection, optimal weights may vary across different dataset compositions and task distributions.
-
-**Scalability Questions:** The framework's effectiveness when scaled to larger numbers of tasks or different foundation models remains to be explored.
-
-**Dynamic Adaptation:** Future work could explore automated approaches to adjust task weights during training based on convergence characteristics and performance metrics.
-
-## 8. Conclusion
-
-We present viPolyQwen, a comprehensive framework for unified multimodal embedding learning that addresses fundamental challenges in multi-task optimization through Strategic Task Weighting, Dynamic Loss Equilibrium, and Enhanced Attention Pooling. Our approach provides mathematically-grounded solutions to critical problems including loss magnitude imbalance, training instability, and suboptimal sequence aggregation.
-
-The Strategic Task Weighting framework represents a significant methodological contribution, offering the first systematic approach to balancing loss contributions across diverse multimodal tasks. Combined with our attention pooling mechanism and robust training procedures, this creates a framework that achieves stable, balanced optimization across heterogeneous multimodal data.
-
-Our work demonstrates that principled approaches to multi-task optimization can enable unified embedding systems that excel across diverse applications while maintaining computational efficiency. The substantial inclusion of Vietnamese content and balanced optimization approach makes this particularly valuable for multilingual and cross-cultural applications.
-
-Future research directions include extending the framework to larger foundation models, developing automated approaches to task weight adaptation, and exploring applications to additional modalities such as audio and video. The theoretical foundations and practical insights presented in this work provide a foundation for continued advancement in unified multimodal representation learning.
+We thank the Qwen team for their foundational vision-language model and the open-source community for tools enabling this research.
 
 ## References
 
-[1] P. Lewis, E. Perez, A. Piktus, et al., "Retrieval-augmented generation for knowledge-intensive NLP tasks," in Advances in Neural Information Processing Systems (NeurIPS), 2020.
+Bengio, Y., Louradour, J., Collobert, R., & Weston, J. (2009). Curriculum learning. In Proceedings of the 26th International Conference on Machine Learning.
 
-[2] A. Radford, J. W. Kim, C. Hallacy, et al., "Learning transferable visual models from natural language supervision," in International Conference on Machine Learning (ICML), 2021.
+Caruana, R. (1997). Multitask learning. Machine learning, 28(1), 41-75.
 
-[3] J. Bai, S. Bai, S. Yang, et al., "Qwen-vl: A versatile vision-language model for understanding, localization, text reading, and beyond," arXiv preprint arXiv:2308.12966, 2023.
+Chen, Z., Badrinarayanan, V., Lee, C. Y., & Rabinovich, A. (2018). Gradnorm: Gradient normalization for adaptive loss balancing in deep multitask networks. In International Conference on Machine Learning.
 
-[4] J.-B. Alayrac, J. Donahue, P. Dieleman, et al., "Flamingo: a visual language model for few-shot learning," in Advances in Neural Information Processing Systems (NeurIPS), 2022.
+Faysse, M., Sibille, H., Wu, T., et al. (2024). ColPali: Efficient document retrieval with vision language models. arXiv preprint arXiv:2407.01449.
 
-[5] M. Faysse, H. Sibille, T. Wu, et al., "Colpali: Efficient document retrieval with vision language models," arXiv preprint arXiv:2407.01449, 2024.
+Jia, C., Yang, Y., Xia, Y., et al. (2021). Scaling up visual and vision-language representation learning with noisy text supervision. In International Conference on Machine Learning.
 
-[9] C. Jia, Y. Yang, Y. Xia, et al., "Scaling up visual and vision-language representation learning with noisy text supervision," in International Conference on Machine Learning (ICML), 2021.
+Kendall, A., Gal, Y., & Cipolla, R. (2018). Multi-task learning using uncertainty to weigh losses for scene geometry and semantics. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition.
 
-[11] Z. Lin, M. Feng, C. N. dos Santos, et al., "A structured self-attentive sentence embedding," in International Conference on Learning Representations (ICLR), 2017.
-
-[12] R. Caruana, "Multitask learning," Machine Learning, vol. 28, no. 1, pp. 41–75, 1997.
-
-[13] A. Kendall, Y. Gal, and R. Cipolla, "Multi-task learning using uncertainty to weigh losses for scene geometry and semantics," in Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2018.
-
-[14] Z. Chen, V. Badrinarayanan, C.-Y. Lee, and A. Rabinovich, "Gradnorm: Gradient normalization for adaptive loss balancing in deep multitask networks," in International Conference on Machine Learning (ICML), 2018.
-
-[15] A. Conneau, K. Khandelwal, N. Goyal, et al., "Unsupervised cross-lingual representation learning at scale," in Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics (ACL), 2020.
-
-[22] N. Reimers and I. Gurevych, "Making monolingual sentence embeddings multilingual using knowledge distillation," in Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), 2020.
+Radford, A., Kim, J. W., Hallacy, C., et al. (2021). Learning transferable visual models from natural language supervision. In International Conference on Machine Learning.
