@@ -1,5 +1,5 @@
 ---
-title: "viPolyQwen: A Unified Multimodal Embedding with Soft MoE Routing and Adaptive Multi-Loss Balancing"
+title: "viPolyQwen: Curriculum-Based Multimodal Embeddings via Soft MoE Routing with Adaptive Loss Balancing"
 author: "Nguyen Anh Nguyen* (EraX) & Gtel Mobile JSC (GMobile) – Vietnam."
 date: "*Corresponding Author: nguyen@hatto.com"
 header-includes:
