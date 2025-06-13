@@ -28,7 +28,7 @@ header-includes:
 
 ### **Abstract**
 
-We introduce **ViUniEmbed**, an architecture that fundamentally simplifies multimodal search by unifying embedding and reranking into a single model. Unlike complex multi-vector methods or traditional two-stage pipelines, ViUniEmbed generates **a single, dense, high-quality vector** per input that excels at both initial retrieval and fine-grained reranking. Our key innovations include: (1) **Prefix-Guided Multi-Task Training**, which uses specialized vocabulary tokens as training scaffolds; (2) **A Defense-in-Depth Stability Architecture**, featuring six distinct mechanisms including the **Gradient Vaccine**, which prevents catastrophic forgetting during modality shifts; (3) **Adaptive Loss Scheduling**, which dynamically warms up and cools down loss parameters for stable convergence; (4) **Calibrated Similarity Learning**, producing continuous scores for direct reranking from the embedding's dot product; and (5) **ViUniEmbed-M**, an extension leveraging Matryoshka Learning for hierarchical embeddings that offer flexible speed-accuracy tradeoffs at inference time. Training on a carefully balanced 8.5 million sample dataset, early results demonstrate a Spearman correlation of 0.649 at just 3% of training, validating the model's calibrated scoring capability. By eliminating separate models, ViUniEmbed reduces infrastructure costs by up to 60% while simultaneously improving accuracy and reducing latency, offering a production-ready solution for enterprise-grade multimodal search.
+We introduce ViUniEmbed (Visual Unified Representation), an architecture that fundamentally simplifies multimodal search by unifying embedding and reranking into a single model. Unlike complex multi-vector methods or traditional two-stage pipelines, ViUniEmbed generates **a single, dense, high-quality vector** per input that excels at both initial retrieval and fine-grained reranking. Our key innovations include: (1) **A Multi-Objective Calibrated Loss Function**, which implicitly teaches the model diverse tasks like calibrated similarity, OCR, and VQA within a single learning framework; (2) **A Defense-in-Depth Stability Architecture**, featuring six distinct mechanisms including the **Gradient Vaccine**, which prevents catastrophic forgetting during modality shifts; (3) **Adaptive Loss Scheduling**, which dynamically tunes loss parameters for stable convergence; and (4) **ViUniEmbed-M**, an extension leveraging Matryoshka Learning for hierarchical embeddings that offer flexible speed-accuracy tradeoffs. Training on a carefully balanced 8.5 million sample dataset, early results demonstrate a Spearman correlation of 0.649 at just 3% of training. By eliminating separate models, ViUniEmbed reduces infrastructure costs by up to 60% while improving accuracy and latency, offering a production-ready solution for enterprise-grade multimodal search.
 
 \endgroup
 
@@ -64,7 +64,6 @@ Early multimodal architectures often relied on complex modal routing gates to di
 
 \begin{center}
 \begin{verbatim}
-
 Input (Text/Image/Both)
     ↓
 Qwen2-VL-2B Backbone (trainable vision and text components)
@@ -74,115 +73,110 @@ Multi-Head Attention Pooling
 Enhanced Projection Layer (with 6 stability mechanisms)
     ↓
 Single Calibrated Vector (e.g., 2048 dimensions)
-
 \end{verbatim}
 \end{center}
 
-This streamlined design ensures that all modalities are processed through a consistent and robust pathway, which is critical for learning a truly unified representation.
+This streamlined design ensures that all modalities and task types are processed through a consistent and robust pathway, forcing the model to learn a truly universal representation space.
 
 ---
 
 ### **3. A Unified Theory of Stability: The ViUniEmbed Innovations**
 
-Training large, multi-objective contrastive models is notoriously unstable. ViUniEmbed's success stems from a holistic approach to stability, integrating innovations at the data, architecture, and loss function levels.
+Training large, multi-objective contrastive models is notoriously unstable. ViUniEmbed's success stems from a holistic approach to stability, integrating innovations at the data, architecture, and loss function levels to create a robust and predictable training environment.
 
-#### **3.1 Innovation 1: Prefix-Guided Multi-Task Training**
+#### **3.1 Innovation 1: A Multi-Objective, Task-Aware Loss Function**
 
-To teach the model diverse capabilities without adding architectural complexity, we developed a "prefix-guided" training strategy. We first expand the tokenizer's vocabulary with a small set of task-specific special tokens: `<text_pair>`, `<ocr>`, `<vqa_single>`, and `<vqa_multi>`.
+Instead of relying on explicit signals like special tokens, ViUniEmbed learns to differentiate tasks implicitly through a sophisticated, multi-component loss function. By training on mixed batches containing data from different tasks, the model is forced to develop a versatile representation space that can satisfy multiple, sometimes competing, objectives.
 
-During training, these tokens are prepended to the input data to signal the task objective. Crucially, **these prefixes are used only during training**. They act as learning scaffolds, forcing the model to develop specialized representations within its shared parameter space. At inference time, the prefixes are omitted. We hypothesize that the model learns to associate input characteristics (e.g., a short question with an image) with the internal states previously conditioned by the prefixes, leading to an emergent, zero-overhead task specialization.
+*   **For Continuous Similarity (Text Pairs):** To learn calibrated scores, we use a composite loss of **KL-Divergence** (for distribution matching), **Mean-Squared Error** (for direct score calibration), and a **Ranking Loss** (to preserve relative order). This trifecta teaches the model to produce truly calibrated scores, not just binary classifications.
+    $$\mathcal{L}_{\text{text-pair}} = \mathcal{L}_{\text{KL}} + \alpha(t) \cdot \mathcal{L}_{\text{score}} + \beta(t) \cdot \mathcal{L}_{\text{rank}}$$
+
+*   **For Binary Tasks (OCR/VQA):** We employ a powerful combination of **InfoNCE** loss for primary contrastive learning and a **Triplet Loss** with task-specific margins for hard-negative mining.
+    $$\mathcal{L}_{\text{OCR/VQA}} = \mathcal{L}_{\text{InfoNCE}} + \mathcal{L}_{\text{triplet}}$$
+
+The total training objective is a weighted sum of these task-specific losses, combined with global regularization terms. This multi-objective approach is the core engine that drives the model's emergent multi-task capabilities.
 
 #### **3.2 Innovation 2: The Defense-in-Depth Stability Architecture**
 
-We engineered a comprehensive, six-layer defense system where each component is mathematically formulated to counteract a specific, empirically observed failure mode during large-scale contrastive training.
+We engineered a comprehensive, six-layer defense system where each component is mathematically formulated to counteract a specific, empirically observed failure mode.
 
 ##### **Defense 1: The Gradient Vaccine: Annealed Modality Introduction**
 
-To prevent catastrophic forgetting when introducing the vision modality, we employ a curriculum learning strategy we term the **Gradient Vaccine**. Let $\mathcal{L}_{\text{text}}$ be the loss from a text-only batch and $\mathcal{L}_{\text{multi}}$ be the loss from a multimodal batch. The expected loss $\mathbb{E}[\mathcal{L}]$ at training step $t$ is a dynamically weighted mixture:
-
-\begin{center}
-$$ \mathbb{E}[\mathcal{L}^{(t)}] = (1 - p_v(t)) \cdot \mathcal{L}_{\text{text}} + p_v(t) \cdot \mathcal{L}_{\text{multi}} $$
-\end{center}
-
-where $p_v(t)$ is the probability of a batch being multimodal. This probability is annealed from a small initial value $\epsilon$ (e.g., 0.02) to full exposure using an exponential growth schedule:
+To prevent catastrophic forgetting when introducing the vision modality, we employ a curriculum learning strategy we term the **Gradient Vaccine**. The probability of a training batch including images, $p_v(t)$, is annealed from a small initial value $\epsilon=0.02$ to full exposure using an exponential growth schedule:
 
 \begin{center}
 $$ p_v(t) = \min(1.0, \epsilon \cdot (1 + r)^t) $$
 \end{center}
 
-Here, $r$ is a small growth rate (e.g., $4.6 \times 10^{-4}$) ensuring the gradient distribution from the vision encoder, $\nabla_{\theta} \mathcal{L}_{\text{multi}}$, is introduced slowly, allowing the shared backbone parameters $\theta$ to adapt without being destabilized by high-entropy initial vision gradients.
+Here, a small growth rate $r$ ensures the gradient distribution from the vision encoder, $\nabla_{\theta} \mathcal{L}_{\text{multi}}$, is introduced slowly, allowing the shared backbone parameters $\theta$ to adapt without being destabilized.
 
 ##### **Defense 2: Adaptive Loss Parameter Scheduling**
 
-The learning objective itself is a non-stationary function of the training step $t$. Key hyperparameters are dynamically scheduled over a warmup phase of $T_w$ steps to stabilize initial learning. The contrastive temperature $\tau$, which controls the sharpness of the softmax distribution, is annealed from a high initial value $\tau_{\text{init}}$ to a target $\tau_{\text{final}}$:
-
-\begin{center}
-$$ \tau(t) = \tau_{\text{init}} - (\tau_{\text{init}} - \tau_{\text{final}}) \cdot \min(1, t/T_w) \quad \text{(Cool-down)} $$
-\end{center}
-
-Conversely, the weights for the score regression and ranking losses, $\alpha$ and $\beta$, are gradually introduced to avoid penalizing the randomly initialized model too harshly:
-
-\begin{center}
-$$ \alpha(t) = \alpha_{\text{init}} + (\alpha_{\text{final}} - \alpha_{\text{init}}) \cdot \min(1, t/T_w) \quad \text{(Warm-up)} $$
-\end{center}
-
-This scheduling strategy ensures the model first learns a coarse separation of the embedding space (driven by InfoNCE with high temperature) before being tasked with the more difficult, fine-grained objectives of score calibration and ranking.
+Key hyperparameters are dynamically scheduled over a warmup phase of $T_w$ steps. The contrastive temperature **$\tau$ cools down** from `0.1` to `0.07`, while loss weights **$\alpha$ and $\beta$ warm up**. This ensures the model first learns a coarse separation of the embedding space before being tasked with the more difficult, fine-grained objectives of score calibration and ranking.
 
 ##### **Defense 3: Advanced Pooling & Spectrally Normalized Projection**
 
-We replace standard pooling with a **Multi-Head Attention Pooling** layer that computes a learned query $\mathbf{e}_{\text{pool}}$ from the sequence of hidden states $\mathbf{H} \in \mathbb{R}^{n \times d_h}$. The projection head, a function $f_{\theta_p}: \mathbb{R}^{d_h} \to \mathbb{R}^{d_e}$, is fortified with **Spectral Normalization**. For each linear layer $\mathbf{x} \mapsto \mathbf{W}\mathbf{x} + \mathbf{b}$ within the projection head, the weight matrix $\mathbf{W}$ is normalized by its largest singular value (spectral norm) $\sigma(\mathbf{W})$:
+We replace standard pooling with a learnable **Multi-Head Attention Pooling** layer. The subsequent projection head is fortified with **Spectral Normalization**, which normalizes the weight matrix $\mathbf{W}$ by its largest singular value $\sigma(\mathbf{W})$:
 
 \begin{center}
-$$ \mathbf{W}_{\text{norm}} = \frac{\mathbf{W}}{\sigma(\mathbf{W})} = \frac{\mathbf{W}}{\max_{\mathbf{v} \neq 0} \frac{\|\mathbf{W}\mathbf{v}\|_2}{\|\mathbf{v}\|_2}} $$
+$$ \mathbf{W}_{\text{norm}} = \frac{\mathbf{W}}{\sigma(\mathbf{W})} $$
 \end{center}
 
-This forces the Lipschitz constant of the layer to be $\leq 1$, constraining the magnitude of the gradients $\|\nabla_{\mathbf{x}} f_{\theta_p}\|$ and preventing uncontrolled gradient flow that can lead to collapse.
+This forces the layer's Lipschitz constant to be $\leq 1$, preventing uncontrolled gradient flow.
 
 ##### **Defense 4: Component-Wise Gradient Clipping**
 
-Recognizing the varying stability of different model sub-modules, we partition the model parameters $\Theta$ into disjoint sets $\{\Theta_1, \Theta_2, \dots, \Theta_k\}$ (e.g., backbone, pooling, projection). After the backward pass, we clip the L2-norm of the gradient for each partition independently:
+We partition model parameters $\Theta$ into sets and clip the L2-norm of the gradient for each partition independently with a threshold $C_i$, allowing us to protect stable pretrained layers while training new layers more aggressively.
 
 \begin{center}
-$$ \forall i \in \{1,\dots,k\}, \quad \mathbf{g}_i = \nabla_{\Theta_i} \mathcal{L}, \quad \text{if } \|\mathbf{g}_i\|_2 > C_i \text{ then } \mathbf{g}_i \leftarrow C_i \frac{\mathbf{g}_i}{\|\mathbf{g}_i\|_2} $$
+$$ \mathbf{g}_i = \nabla_{\Theta_i} \mathcal{L}; \quad \text{if } \|\mathbf{g}_i\|_2 > C_i \text{ then } \mathbf{g}_i \leftarrow C_i \frac{\mathbf{g}_i}{\|\mathbf{g}_i\|_2} $$
 \end{center}
-
-where $C_i$ is the clipping threshold for partition $i$. This allows us to apply a very strict clip (e.g., $C_{\text{backbone}}=1.0$) to preserve the robust features of the pretrained backbone, while allowing more aggressive updates (e.g., $C_{\text{projection}}=5.0$) for the randomly initialized layers.
 
 ##### **Defense 5: Anti-Collapse Regularization**
 
-To directly penalize the symptom of representation collapse—high similarity between distinct items—we introduce a regularization term. For a batch of embeddings $\{\mathbf{e}_1, \dots, \mathbf{e}_B\}$, we compute the off-diagonal similarity matrix $\mathbf{S}_{ij} = \mathbf{e}_i^T \mathbf{e}_j$ for $i \neq j$. The penalty is a Hinge loss activated only when similarities exceed a high threshold $\delta$ (e.g., 0.95):
+An emergency brake that penalizes high similarity $\mathbf{S}_{ij}$ between distinct items in a batch if it exceeds a threshold $\delta=0.95$.
 
 \begin{center}
 $$ \mathcal{L}_{\text{collapse}} = \lambda_{\text{ac}} \cdot \mathbb{E}_{i \neq j} \left[ \max(0, \mathbf{S}_{ij} - \delta) \right] $$
 \end{center}
 
-This term is inert when the model is healthy ($\mathbf{S}_{ij} < \delta$) but acts as a powerful repulsive force if the representations begin to cluster, providing an emergency brake against collapse.
-
 ##### **Defense 6: Hyperspherical Uniformity Loss**
 
-To encourage the model to utilize the entire surface of the embedding hypersphere, we add a uniformity loss based on the pairwise Gaussian potential, as defined by Wang & Isola (2020):
+A uniformity loss, adapted from Wang & Isola (2020), encourages embeddings to spread across the hypersphere, maximizing the expressive capacity of the representation space.
 
 \begin{center}
 $$ \mathcal{L}_{\text{uniform}} = \log \mathbb{E}_{i \neq j} \left[ \exp(-t\|\mathbf{e}_i - \mathbf{e}_j\|_2^2) \right] $$
 \end{center}
 
-where $t$ is a temperature parameter. Minimizing this loss is equivalent to maximizing the potential energy of a system of particles, encouraging them to spread out as far as possible from one another. This directly improves the quality and expressive power of the learned representations.
+---
+
+#### **3.3 The ViUniEmbed Training Dataset: A Curriculum of Complexity**
+
+The success of ViUniEmbed is critically dependent on the composition and quality of its training data. We constructed a diverse, 8.5 million sample dataset specifically designed to teach the model a spectrum of capabilities, from binary discrimination to nuanced, continuous understanding. The dataset is not merely a large collection of pairs but a deliberately structured curriculum.
+
+| Data Type | Sample Count | Percentage | Core Learning Objective |
+| :--- | :--- | :--- | :--- |
+| **Binary Text-Pairs** | 800,000 | 9.4% | Foundational semantic relevance (Is A related to B?). |
+| **Continuous Text-Pairs** | 3,400,000 | 40.0% | **Calibrated reranking** and fine-grained similarity. |
+| **OCR Tasks** | 2,150,000 | 25.3% | Robust visual text extraction and grounding. |
+| **VQA Tasks** | 2,150,000 | 25.3% | Complex multimodal reasoning and comprehension. |
+| **Total** | **8,500,000** | **100%** | **A Unified, Universal Representation.** |
+
+#### **Strategic Rationale for Data Composition**
+
+Our data strategy is built on the principle of **progressive complexity transfer**. We hypothesize that a model must first master simpler, coarse-grained tasks before it can effectively learn more complex, fine-grained ones.
+
+1.  **Foundational Layer (Binary & OCR/VQA Tasks):** Over 50% of our dataset comprises tasks with a clear binary objective (e.g., "is this the correct text for this image?" or "is this the right answer to the question?"). This large base of binary-signal data, driven by InfoNCE and Triplet losses, forces the model to first learn a robust and well-separated embedding space. It establishes a strong semantic foundation by answering the fundamental question of relevance.
+
+2.  **Calibration Layer (Continuous Text-Pairs):** The largest single component of our dataset (40%) is dedicated to continuous similarity pairs. These samples, with scores spanning the full `[0, 1]` range, are introduced once the model has a stable semantic foundation. The KL-Divergence and MSE components of our loss function then act upon this stable base, "stretching" and "calibrating" the embedding space to reflect nuanced degrees of similarity. This is the critical step that bridges the gap between a standard embedding model and a true reranker.
+
+3.  **Multimodal Robustness (OCR & VQA Diversity):** The OCR and VQA subsets were intentionally curated to include a high diversity of scenarios: single and multiple images per query, and single-turn versus multi-turn conversational VQA. This forces the `Multi-Head Attention Pooling` layer to learn how to contextually aggregate information from multiple visual sources and long conversational histories, building a model that is robust to the varied and often messy inputs seen in production environments.
+
+In essence, our dataset acts as an **implicit curriculum**. The model is simultaneously exposed to all task types, but the sheer volume of binary-signal data provides a stable "center of gravity" that prevents divergence, while the large volume of continuous-signal data provides the rich gradients necessary for learning the final, calibrated reranking capability.
 
 ---
 
-#### **3.3 Innovation 3: Calibrated, Task-Specific Loss Functions**
-
-The learning objective is tailored to the nature of each task, leveraging the scheduled parameters described above.
-
-*   **For Continuous Similarity (Text Pairs):** We use a composite loss of **KL-Divergence** (for distribution matching), **Mean-Squared Error** (for direct score calibration), and a **Ranking Loss** (to preserve relative order). This trifecta teaches the model to produce truly calibrated scores.
-    $$\mathcal{L}_{\text{text-pair}} = \mathcal{L}_{\text{KL}} + \alpha(t) \cdot \mathcal{L}_{\text{score}} + \beta(t) \cdot \mathcal{L}_{\text{rank}}$$
-
-*   **For Binary Tasks (OCR/VQA):** We employ a powerful combination of **InfoNCE** loss for primary contrastive learning and a **Triplet Loss** with task-specific margins for hard-negative mining, all calculated using the scheduled temperature $\tau(t)$.
-    $$\mathcal{L}_{\text{OCR/VQA}} = \mathcal{L}_{\text{InfoNCE}} + \mathcal{L}_{\text{triplet}}$$
-
----
-
-### **4. Innovation 4: ViUniEmbed-M and Hierarchical Matryoshka Learning**
+### **4. Innovation 3: ViUniEmbed-M and Hierarchical Matryoshka Learning**
 
 ViUniEmbed-M extends the base architecture with nested representations using Matryoshka Representation Learning (Kusupati et al., 2022). A single 2048-dimensional vector is trained such that its prefixes form complete, usable embeddings at smaller dimensions (e.g., 512, 768, 1024).
 
@@ -232,7 +226,7 @@ The per-dimension health of ViUniEmbed-M is also excellent, demonstrating a clea
 
 ### **7. Conclusion: A New Paradigm for Multimodal Search**
 
-ViUniEmbed and ViUniEmbed-M establish a new, more efficient paradigm for building high-performance multimodal search systems. By successfully unifying the distinct tasks of embedding and reranking into a single, calibrated vector, we eliminate the architectural fragmentation that has plagued production AI systems. Our key contributions—the **Gradient Vaccine**, prefix-guided training, a defense-in-depth stability architecture, **dynamically scheduled loss objectives**, and Matryoshka flexibility—provide a comprehensive blueprint for the next generation of practical, powerful, and cost-effective multimodal AI.
+ViUniEmbed and ViUniEmbed-M establish a new, more efficient paradigm for building high-performance multimodal search systems. By successfully unifying the distinct tasks of embedding and reranking into a single, calibrated vector, we eliminate the architectural fragmentation that has plagued production AI systems. Our key contributions—a robust stability architecture driven by the **Gradient Vaccine**, a powerful **multi-objective loss function**, and the flexibility of **Matryoshka learning**—provide a comprehensive blueprint for the next generation of practical, powerful, and cost-effective multimodal AI.
 
 To accelerate progress in the field, all code, model weights, and training configurations will be made publicly available upon publication.
 
@@ -247,5 +241,3 @@ Kusupati, A., et al. (2022). Matryoshka Representation Learning. *Advances in Ne
 Wang, T., & Isola, P. (2020). Understanding Contrastive Representation Learning through Alignment and Uniformity on the Hypersphere. *Proceedings of the 37th International Conference on Machine Learning (ICML)*.
 
 Yasunaga, M., et al. (2024). Retrieval-Augmented Thought Process for Weak-to-Strong Reasoning. *arXiv:2405.01354*.
-
----
