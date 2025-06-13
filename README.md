@@ -4,7 +4,7 @@
 
 ---
 
-# ViUniRep & ViUniRep-M: A Single Vector for Unified Multimodal Search
+# ViUniRep & ViUniRep-M: ViUniEmbed: Unified Embedding and Reranking with a Single, Calibrated Multimodal Vector
 
 **ViUniRep** is a state-of-the-art multimodal embedding model that unifies first-stage retrieval and second-stage reranking into a single, powerful architecture. It produces one high-quality, calibrated vector per input, eliminating the need for complex, multi-model pipelines and revolutionizing the efficiency of production AI search systems.
 
