@@ -64,6 +64,7 @@ Early multimodal architectures often relied on complex modal routing gates to di
 
 \begin{center}
 \begin{verbatim}
+
 Input (Text/Image/Both)
     ↓
 Qwen2-VL-2B Backbone (frozen vision and trainable text components)
@@ -73,6 +74,7 @@ Multi-Head Attention Pooling
 Enhanced Projection Layer (with 6 stability mechanisms)
     ↓
 Single Calibrated Vector (e.g., 2048 dimensions)
+
 \end{verbatim}
 \end{center}
 
