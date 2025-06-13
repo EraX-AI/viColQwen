@@ -60,7 +60,7 @@ This property is the key to unifying tasks. A single vector search in a database
 
 #### **2.2 A Streamlined, Single-Path Architecture**
 
-Early multimodal architectures often relied on complex modal routing gates to direct information flow. We found this approach prone to instability. ViUniEmbed adopts a clean, single-path design that enhances stability and performance.
+Early multimodal architectures often relied on complex modal routing gates to direct information flow. We found this approach prone to instability. ViUniEmbed adopts a clean, single-path design that enhances stability and performance. To guarantee the stability of the learned text representations and prevent catastrophic forgetting, we adopted a strategy of a fully frozen vision backbone. All multimodal learning is therefore localized to the fusion and projection layers.
 
 \begin{center}
 \begin{verbatim}
