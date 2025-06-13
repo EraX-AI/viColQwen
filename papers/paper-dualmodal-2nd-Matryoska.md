@@ -66,7 +66,7 @@ Early multimodal architectures often relied on complex modal routing gates to di
 \begin{verbatim}
 Input (Text/Image/Both)
     ↓
-Qwen2-VL-2B Backbone (trainable vision and text components)
+Qwen2-VL-2B Backbone (frozen vision and trainable text components)
     ↓
 Multi-Head Attention Pooling
     ↓
